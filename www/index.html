@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>نظام حصر الأسر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.294.0/dist/umd/lucide.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#f4f6f7;--card:#ffffff;--pri:#0d9488;--pri-d:#0f766e;--txt:#1f2937;--sub:#6b7280;--bd:#e2e8f0;--danger:#b91c1c;--warn:#b7791f;--ok:#1e7e45}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f172a;--card:#1e293b;--pri:#2dd4bf;--pri-d:#14b8a6;--txt:#f1f5f9;--sub:#94a3b8;--bd:#334155}}
+:root[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--pri:#2dd4bf;--pri-d:#14b8a6;--txt:#f1f5f9;--sub:#94a3b8;--bd:#334155}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+body{margin:0;font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--txt);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);min-height:100%}
+header{position:sticky;top:8px;margin-top:8px;padding-top:env(safe-area-inset-top,0px);background:var(--pri);color:#fff;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,.15);border-radius:0 0 14px 14px}
+.hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;max-width:960px;margin:0 auto;position:relative;min-height:58px}
+.hd h1{font-size:16px;margin:0;font-weight:700}
+.pill{font-size:11px;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.18)}
+.top-clock{position:absolute;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;white-space:nowrap;text-align:center;line-height:1.25;pointer-events:none}
+.top-clock .time{font-size:15px;font-weight:800;letter-spacing:.2px}
+.top-clock .date{font-size:10px;opacity:.92;margin-top:2px}
+@media(max-width:560px){.top-clock .time{font-size:13px}.top-clock .date{font-size:9px}.hd{padding-left:10px;padding-right:10px}.hd h1{font-size:14px}.pill{font-size:9px}}
+nav{display:flex;gap:4px;overflow-x:auto;padding:0 8px 8px;max-width:960px;margin:0 auto}
+nav button{flex:0 0 auto;background:rgba(255,255,255,.12);border:none;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;white-space:nowrap}
+nav button.active{background:#fff;color:var(--pri-d);font-weight:700}
+nav button{display:inline-flex;align-items:center;gap:6px}
+.ic{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.btn{display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.hd h1{display:flex;align-items:center;gap:8px}
+main{max-width:960px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;text-align:center}
+.stat b{display:block;font-size:24px;color:var(--pri-d)}
+.stat span{font-size:12px;color:var(--sub)}
+label{display:block;font-size:13px;margin:10px 0 4px;font-weight:600}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;font-size:14px;background:var(--bg);color:var(--txt);font-family:inherit}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);border-color:var(--pri)}
+.err{color:var(--danger);font-size:12px;margin-top:3px;display:none}
+.field.invalid input,.field.invalid select,.field.invalid textarea{border-color:var(--danger)}
+.field.invalid .err{display:block}
+.btn{background:var(--pri);color:#fff;border:none;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.sec{background:transparent;color:var(--pri-d);border:1px solid var(--pri)}
+.btn.danger{background:var(--danger)}
+.btn.sm{padding:6px 10px;font-size:12px}
+.fam-box{border:1.5px dashed var(--pri);border-radius:10px;padding:12px;margin:12px 0;position:relative}
+.fam-box h4{margin:0 0 6px;font-size:14px;color:var(--pri-d)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px;text-align:right;border-bottom:1px solid var(--bd)}
+th{background:var(--bg);font-size:12px;color:var(--sub)}
+.tblwrap{overflow-x:auto}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px}
+.b-ok{background:#dcfce7;color:var(--ok)}
+.b-warn{background:#fef3c7;color:var(--warn)}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:16px;left:16px;max-width:400px;margin:0 auto;background:var(--pri-d);color:#fff;padding:12px 16px;border-radius:10px;font-size:14px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.toast.err{background:var(--danger)}
+.hide{display:none!important}
+.muted{color:var(--sub);font-size:12px}
+.login-wrap{min-height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{max-width:380px;width:100%}
+.pw-wrap{position:relative}
+.pw-wrap button{position:absolute;left:8px;top:8px;background:none;border:none;color:var(--sub);cursor:pointer;font-size:12px}
+.chip{display:inline-block;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;margin:2px;font-size:12px;cursor:pointer}
+.chip.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+footer.note{font-size:11px;color:var(--sub);text-align:center;padding:16px}
+.empty{text-align:center;color:var(--sub);padding:30px 10px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;display:flex;align-items:center;justify-content:center;padding:14px;padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.modal-box{background:var(--card);border:1px solid var(--bd);border-radius:14px;max-width:540px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--bd);flex:0 0 auto}
+.modal-head h3{margin:0;font-size:16px}
+.modal-close{background:none;border:none;color:var(--sub);cursor:pointer;padding:4px}
+.modal-body{padding:12px 16px;overflow-y:auto;flex:1 1 auto}
+.modal-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px}
+.modal-row:last-child{border-bottom:none}
+.mrow-label{color:var(--sub);flex:0 0 auto}
+.mrow-val{font-weight:600;text-align:left;word-break:break-word}
+.modal-foot{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--bd);flex:0 0 auto;flex-wrap:wrap}
+.modal-foot .btn{flex:1 1 auto}
+.fam-row{cursor:pointer}
+.pdfbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+#pdfExportRoot{position:fixed;left:-99999px;top:0;direction:rtl;font-family:'Cairo',Tahoma,Arial,sans-serif}
+.pdfPage{background:#fff;color:#17212b;padding:12px 14px;box-sizing:border-box}
+.pdfPage h2{margin:0 0 4px;font-size:22px;line-height:1.25}
+.pdfPage .pmeta{font-size:10.5px;color:#52635e;margin-bottom:8px;line-height:1.45}
+.pdfPage table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
+.pdfPage th,.pdfPage td{border:1px solid #b8d2ca;padding:6px 8px;text-align:right;white-space:nowrap;overflow:visible}
+.pdfPage th.wrap,.pdfPage td.wrap{white-space:normal;word-break:break-word}
+.pdfPage th{background:#0b6b53;color:#fff;font-weight:800}
+.pdfPage tr:nth-child(even) td{background:#f6faf8}
+.pdfPage .pfoot{font-size:10px;color:#666;margin-top:8px;text-align:center}
+.pdfPage table.field-table{font-size:12.5px}
+.pdfPage table.field-table td,.pdfPage table.field-table th{padding:7px 9px;line-height:1.35}
+.pdfPage table.field-table .flabel{background:#e3f1ed;font-weight:800;text-align:right}
+.pdfPage table.field-table .fval{text-align:left;font-weight:600}
+
+/* ===== الوان فخمة وتحسين وضوح الكتابة ===== */
+:root{--bg:#f5f7f8;--card:#ffffff;--pri:#0b6b53;--pri-d:#084c3d;--txt:#17212b;--sub:#53616d;--bd:#d7dee3;--danger:#b42318;--warn:#9a6700;--ok:#147a4b}
+body{color:#17212b;background:#f5f7f8}
+header{background:linear-gradient(135deg,#084c3d,#0b6b53);box-shadow:0 3px 12px rgba(8,76,61,.22)}
+nav button{background:rgba(255,255,255,.12);color:#fff}
+nav button.active{background:#fff;color:#084c3d}
+.card,.stat{background:#fff;border-color:#d7dee3;box-shadow:0 3px 12px rgba(23,33,43,.055)}
+.stat b{color:#084c3d}
+.stat span,.muted{color:#53616d}
+label{color:#17212b;font-weight:700}
+input,select,textarea{background:#fff;color:#17212b;border-color:#cbd5dc}
+input::placeholder,textarea::placeholder{color:#7a8791;opacity:1}
+input:focus,select:focus,textarea:focus{outline:2px solid rgba(11,107,83,.22);border-color:#0b6b53}
+.btn{background:linear-gradient(135deg,#0b6b53,#084c3d);color:#fff;box-shadow:0 2px 6px rgba(8,76,61,.16)}
+.btn.sec{background:#fff;color:#084c3d;border-color:#0b6b53;box-shadow:none}
+.fam-box{border-color:#0b6b53;background:#fbfdfc}
+.fam-box h4{color:#084c3d}
+th{background:#eef3f1;color:#30413b}
+td{color:#17212b}
+.badge.b-ok{background:#e5f5ec;color:#12643f}
+.badge.b-warn{background:#fff4d6;color:#7a5200}
+.toast{background:#084c3d}
+.login-card{background:#fff;border-color:#d7dee3;box-shadow:0 8px 28px rgba(23,33,43,.10)}
+
+/* ===== تصحيح ألوان تفاصيل الأسرة وملفات PDF ===== */
+.modal-overlay{background:rgba(15,23,30,.62)}
+.modal-box{background:#ffffff !important;color:#17212b !important;border:1px solid #cfd8d5;box-shadow:0 18px 50px rgba(8,76,61,.25)}
+.modal-head{background:#ffffff;color:#084c3d;border-bottom:1px solid #d7e1de}
+.modal-head h3{color:#084c3d;font-weight:800}
+.modal-close{color:#0b6b53 !important}
+.modal-body{background:#ffffff}
+.modal-row{border-bottom:1px solid #dfe7e4;color:#17212b}
+.mrow-label{color:#52635e !important;font-weight:700}
+.mrow-val{color:#17212b !important;font-weight:700}
+.modal-foot{background:#ffffff;border-top:1px solid #d7e1de}
+.modal-foot .btn{font-weight:800}
+.modal-foot .btn.sec{background:#ffffff;color:#084c3d;border-color:#0b6b53}
+.modal-foot .btn.danger{background:#b42318;color:#ffffff}
+.modal-foot .btn:not(.sec):not(.danger){background:linear-gradient(135deg,#0b6b53,#084c3d);color:#ffffff}
+/* ألوان PDF ثابتة ومستقلة عن ألوان المتصفح أو الوضع الداكن */
+.pdfPage{background:#ffffff !important;color:#17212b !important;padding:12px 14px !important}
+.pdfPage h2{color:#075e49 !important;font-weight:800}
+.pdfPage .pmeta{color:#4d625b !important}
+.pdfPage th{background:#075e49 !important;color:#ffffff !important;border-color:#075e49 !important}
+.pdfPage td{background:#ffffff;color:#17212b;border-color:#bfd4ce}
+.pdfPage tr:nth-child(even) td{background:#f5faf8 !important}
+.pdfPage table.field-table .flabel{background:#e1f0eb !important;color:#075e49 !important;font-weight:800}
+.pdfPage table.field-table .fval{background:#ffffff !important;color:#17212b !important;font-weight:600}
+.pdfPage .pfoot{color:#60716c !important}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const $=s=>document.querySelector(s),$$=s=>document.querySelectorAll(s);
+function uid(){return 'id-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8)}
+function nowIso(){return new Date().toISOString()}
+function fmt(d){return new Date(d).toLocaleString('ar-EG',{dateStyle:'short',timeStyle:'short'})}
+
+// ============================================================
+// الاتصال الحقيقي بـ Supabase — عدّل القيمتين التاليتين فقط إذا غيّرت المشروع
+// ============================================================
+const SUPABASE_URL='https://chwvxnqzgvfelyljmxtt.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNod3Z4bnF6Z3ZmZWx5bGpteHR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NzQ1MzMsImV4cCI6MjEwMjA1MDUzM30.rHUz6adjQ6HYiKyKVg0ieNW0wrIokXZA-k2ItOlUMe8';
+let supabaseClient=null;
+
+// ذاكرة تخزين مؤقت في المتصفح (RAM) لنتائج قاعدة البيانات — تُحدَّث بعد كل عملية، وكل شاشات العرض تقرأ منها مباشرة
+let _houses=[], _profiles=[];
+function houses(){return _houses}
+function users(){return _profiles}
+async function loadProfiles(){
+  const {data,error}=await supabaseClient.from('profiles').select('*').eq('active',true).eq('deleted',false).order('created_at');
+  if(error){toast('تعذّر تحميل قائمة المستخدمين: '+error.message,true);return}
+  _profiles=data||[];
+}
+async function loadHouses(){
+  const {data,error}=await supabaseClient.from('houses').select('*, families(*)').order('created_at',{ascending:false});
+  if(error){toast('تعذّر تحميل بيانات الأسر: '+error.message,true);return}
+  _houses=(data||[]).map(h=>({...h, families:(h.families||[]).slice().sort((a,b)=>(a.family_number||0)-(b.family_number||0))}));
+}
+async function refreshAll(){await Promise.all([loadProfiles(),loadHouses()])}
+
+let session=null;
+let route='login', editHouseId=null, viewHouseId=null, detailReturnRoute='search';
+let topClockTimer=null;
+let editTargetHouseId=null, editTargetFamilyId=null, editFamilyDraft=null, editHouseFields=null;
+// المدير يستطيع تعديل/حذف أي سجل، والباحث يستطيع ذلك فقط لسجلاته هو — وهذه المرة القاعدة نفسها مفروضة فعلياً
+// في قاعدة البيانات عبر سياسات RLS (ملف supabase_schema.sql)، وليست فقط تحققاً شكلياً في الواجهة
+function canEditFamily(h){return h && session && (session.role==='admin' || h.researcher_id===session.id)}
+async function deleteFamily(hId,fId,afterRoute){
+  const h=houses().find(x=>x.id===hId);
+  if(!canEditFamily(h)){toast('ليست لديك صلاحية حذف هذا السجل',true);return}
+  const f0=h.families.find(x=>x.id===fId);
+  if(!confirm(`هل أنت متأكد من حذف بيانات أسرة «${f0?f0.head_name:''}» — رقم المنزل ${h.house_number}؟ لا يمكن التراجع عن هذا الإجراء.`))return;
+  const {error}=await supabaseClient.from('families').delete().eq('id',fId);
+  if(error){toast('تعذّر الحذف: '+error.message,true);return}
+  if(h.families.length<=1){
+    await supabaseClient.from('houses').delete().eq('id',hId); // آخر أسرة في المنزل → يُحذف المنزل معها تلقائياً
+  }
+  await refreshAll();
+  toast('تم حذف بيانات الأسرة بنجاح');
+  nav(afterRoute);
+}
+function startEditFamily(hId,fId,returnRoute){
+  const h=houses().find(x=>x.id===hId);
+  if(!canEditFamily(h)){toast('ليست لديك صلاحية تعديل هذا السجل',true);return}
+  const f=h.families.find(x=>x.id===fId);
+  editTargetHouseId=hId;editTargetFamilyId=fId;
+  editHouseFields={house_number:h.house_number,block_number:h.block_number};
+  editFamilyDraft=JSON.parse(JSON.stringify(f));
+  detailReturnRoute=returnRoute;
+  nav('editFamily');
+}
+let famDraft=[]; // مسودة الأسر أثناء الإضافة
+
+function toast(msg,isErr){
+  const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+}
+
+// ----- التحقق -----
+function reqStr(v){return v!==undefined && v!==null && String(v).trim().length>0}
+function reqNum(v){return v!==undefined && v!==null && String(v).trim()!=='' && !isNaN(v) && Number(v)>=0}
+
+function validateHouse(h){
+  const e={};
+  if(!reqNum(h.house_number)) e.house_number='رقم المنزل مطلوب';
+  return e;
+}
+function validateFamily(f){
+  const e={};
+  if(!reqStr(f.head_name)) e.head_name='اسم رب الأسرة مطلوب';
+  if(!reqStr(f.phone)) e.phone='رقم الهاتف مطلوب';
+  if(!reqNum(f.sons)) e.sons='عدد أفراد الأسرة مطلوب';
+  if(!reqNum(f.males)) e.males='عدد الذكور مطلوب';
+  if(!reqNum(f.females)) e.females='عدد الإناث مطلوب';
+  if(!reqNum(f.under5)) e.under5='هذا الحقل مطلوب';
+  if(!f.divorced) e.divorced='مطلوب';
+  if(!f.widow) e.widow='مطلوب';
+  if(!f.chronic_disease) e.chronic_disease='مطلوب';
+  if(f.chronic_disease==='نعم'){
+    if(!reqStr(f.chronic_disease_type)) e.chronic_disease_type='نوع المرض مطلوب';
+    if(!f.treatment) e.treatment='مطلوب';
+    if(f.treatment==='نعم' && !reqStr(f.treatment_type)){} // اختياري
+  }
+  if(!f.disability) e.disability='مطلوب';
+  if(f.disability==='نعم' && (!f.disability_type || f.disability_type.length===0)) e.disability_type='اختر نوع إعاقة واحداً على الأقل';
+  return e;
+}
+
+// ----- المسارات -----
+function nav(r){route=r;render();window.scrollTo(0,0)}
+async function logout(){
+  await supabaseClient.auth.signOut();
+  session=null;_houses=[];_profiles=[];
+  nav('login');
+}
+// استعادة الجلسة الحقيقية من Supabase عند فتح الصفحة أو تحديثها (التوكن محفوظ بأمان بواسطة مكتبة supabase-js نفسها)
+async function loadSessionProfile(authUser){
+  const {data,error}=await supabaseClient.from('profiles').select('*').eq('id',authUser.id).single();
+  if(error || !data || data.deleted || !data.active){
+    await supabaseClient.auth.signOut();
+    session=null;
+    return false;
+  }
+  session={id:authUser.id,email:authUser.email,username:data.username||'',name:data.name,role:data.role};
+  return true;
+}
+async function boot(){
+  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{
+    auth:{
+      persistSession:true,
+      autoRefreshToken:true,
+      detectSessionInUrl:false
+    }
+  });
+  $('#app').innerHTML='<div class="login-wrap"><p class="muted">جارٍ الاتصال بقاعدة البيانات...</p></div>';
+  const {data:{session:sbSession}}=await supabaseClient.auth.getSession();
+  if(sbSession){
+    const ok=await loadSessionProfile(sbSession.user);
+    if(ok) await refreshAll();
+  }
+  route=session?'dashboard':'login';
+  render();
+}
+
+function updateTopClock(){
+  const el=$('#topClock');
+  if(!el)return;
+  const now=new Date();
+  el.querySelector('.time').textContent=now.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:true});
+  el.querySelector('.date').textContent=now.toLocaleDateString('ar-EG',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+function startTopClock(){
+  if(topClockTimer)clearInterval(topClockTimer);
+  updateTopClock();
+  topClockTimer=setInterval(updateTopClock,1000);
+}
+function render(){
+  const app=$('#app');
+  if(!session){app.innerHTML=viewLogin();bindLogin();return}
+  if(route==='login') route='dashboard'; // حماية إضافية: أي جلسة فعّالة تذهب للرئيسية وليس لشاشة الدخول
+  app.innerHTML=layout();
+  bindNav();
+  const body=$('#body');
+  if(route==='dashboard') body.innerHTML=viewDashboard();
+  else if(route==='add') {body.innerHTML=viewAdd();bindAdd();}
+  else if(route==='search'){body.innerHTML=viewSearch();bindSearch();}
+  else if(route==='detail'){body.innerHTML=viewDetail();bindDetail();}
+  else if(route==='neighborhood'){body.innerHTML=viewNeighborhood();bindNeighborhood();}
+  else if(route==='editFamily'){body.innerHTML=viewEditFamily();bindEditFamily();}
+  else if(route==='researchers'){body.innerHTML=viewResearchers();bindResearchers();}
+  else if(route==='settings'){body.innerHTML=viewSettings();bindSettings();}
+  if(window.lucide) lucide.createIcons();
+  startTopClock();
+}
+
+
+function icon(name,size){return `<span class="ic" data-lucide="${name}" style="width:${size||16}px;height:${size||16}px"></span>`}
+function layout(){
+  const tabs=[['dashboard','الرئيسية','home'],['add','إضافة منزل','house-plus'],['search','السجلات','clipboard-list'],['neighborhood','جميع أسر الحي','users']];
+  if(session.role==='admin') tabs.push(['researchers','الباحثون','user-cog']);
+  tabs.push(['settings','الإعدادات','settings']);
+  return `
+  <header>
+    <div class="hd">
+      <h1>${icon('clipboard-list',20)} نظام حصر الأسر</h1>
+      <div class="top-clock" id="topClock" aria-live="polite"><div class="time">--:--:--</div><div class="date">جاري تحميل التاريخ...</div></div>
+      <span class="pill">${session.name} • ${session.role==='admin'?'مدير':'باحث'}</span>
+    </div>
+    <nav>${tabs.map(([r,l,ic])=>`<button data-r="${r}" class="${route===r?'active':''}">${icon(ic)}${l}</button>`).join('')}</nav>
+  </header>
+  <main id="body"></main>
+  `;
+}
+function bindNav(){$$('nav button').forEach(b=>b.onclick=()=>nav(b.dataset.r))}
+
+// ===== تسجيل الدخول (مصادقة حقيقية عبر Supabase Auth) =====
+function viewLogin(){
+  return `<div class="login-wrap"><div class="card login-card">
+    <h2 style="margin-top:0;text-align:center">تسجيل الدخول</h2>
+    <p class="muted" style="text-align:center">متصل بقاعدة بيانات حقيقية — استخدم اسم المستخدم الخاص بك</p>
+    <div class="field" id="f-u"><label>اسم المستخدم</label><input id="username" type="text" autocomplete="username"><div class="err">مطلوب</div></div>
+    <div class="field" id="f-p"><label>كلمة المرور</label>
+      <div class="pw-wrap"><input id="password" type="password" autocomplete="current-password"><button type="button" id="togglePw">إظهار</button></div>
+      <div class="err">مطلوبة</div>
+    </div>
+    <div id="loginErr" class="err" style="display:none;margin-top:8px"></div>
+    <button class="btn" id="loginBtn" style="width:100%;margin-top:12px">دخول</button>
+  </div></div>`;
+}
+function bindLogin(){
+  $('#togglePw').onclick=()=>{const p=$('#password');const show=p.type==='password';p.type=show?'text':'password';$('#togglePw').textContent=show?'إخفاء':'إظهار'};
+  $('#loginBtn').onclick=async ()=>{
+    const u=$('#username').value.trim(),p=$('#password').value;
+    $('#f-u').classList.toggle('invalid',!u);
+    $('#f-p').classList.toggle('invalid',!p);
+    if(!u||!p)return;
+    const errBox=$('#loginErr');errBox.style.display='none';
+    const btn=$('#loginBtn');btn.disabled=true;btn.textContent='جارٍ الدخول...';
+    const {data:lookup,error:lookupError}=await supabaseClient.rpc('get_login_email_by_username',{p_username:u.toLowerCase()});
+    if(lookupError || !lookup){errBox.style.display='block';errBox.textContent='اسم المستخدم أو كلمة المرور غير صحيحة';btn.disabled=false;btn.textContent='دخول';return;}
+    const {data,error}=await supabaseClient.auth.signInWithPassword({email:lookup,password:p});
+    if(error){
+      errBox.style.display='block';
+      errBox.textContent=error.message==='Invalid login credentials'?'البريد الإلكتروني أو كلمة المرور غير صحيحة':error.message;
+      btn.disabled=false;btn.textContent='دخول';return;
+    }
+    const ok=await loadSessionProfile(data.user);
+    if(!ok){
+      errBox.style.display='block';errBox.textContent='هذا الحساب معطّل أو محذوف. راجع المدير.';
+      btn.disabled=false;btn.textContent='دخول';return;
+    }
+    await refreshAll();
+    btn.disabled=false;btn.textContent='دخول';
+    nav('dashboard');
+  };
+}
+
+// ===== لوحة التحكم =====
+function viewDashboard(){
+  const H=houses();
+  const myHouses = session.role==='admin'? H : H.filter(h=>h.researcher_id===session.id);
+  const totalFamilies=H.reduce((s,h)=>s+h.families.length,0);
+  const myFamilies=myHouses.reduce((s,h)=>s+h.families.length,0);
+  const lastRecords=[...H].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
+  return `
+  <div class="grid" style="margin-bottom:16px">
+    <div class="stat"><b>${H.length}</b><span>عدد المنازل المسجلة</span></div>
+    <div class="stat"><b>${totalFamilies}</b><span>عدد الأسر المسجلة</span></div>
+    <div class="stat"><b>${myFamilies}</b><span>سجلاتي (${session.name})</span></div>
+    <div class="stat"><b style="color:var(--ok)">${navigator.onLine?icon('wifi',20):icon('wifi-off',20)}</b><span>${navigator.onLine?'متصل بقاعدة البيانات':'غير متصل بالإنترنت'}</span></div>
+  </div>
+  
+  <div class="card">
+    <b>آخر السجلات المضافة</b>
+    ${lastRecords.length? '<div class="tblwrap"><table><tr><th>رقم المنزل</th><th>عدد الأسر</th><th>الباحث</th><th>التاريخ</th></tr>'+
+      lastRecords.map(h=>`<tr><td>${h.house_number}</td><td>${h.families.length}</td><td>${h.researcher_name}</td><td>${fmt(h.created_at)}</td></tr>`).join('')+'</table></div>'
+      : '<p class="empty">لا توجد سجلات بعد</p>'}
+  </div>`;
+}
+
+// ===== إضافة منزل وأسرة =====
+function newFamily(){return {id:uid(),head_name:'',phone:'',sons:'',males:'',females:'',under5:'',divorced:'',widow:'',chronic_disease:'',chronic_disease_type:'',treatment:'',treatment_type:'',disability:'',disability_type:[],notes:''}}
+function viewAdd(){
+  if(famDraft.length===0) famDraft=[newFamily()];
+  return `
+  <div class="card">
+    <h3 style="margin-top:0">بيانات المنزل</h3>
+    <div class="row2">
+      <div class="field" id="f-house_number"><label>رقم المنزل *</label><input id="house_number" type="number" min="0"><div class="err"></div></div>
+      <div class="field"><label>رقم المربع</label><input id="block_number" type="number" min="0"></div>
+    </div>
+    <label>اسم الباحث/الباحثة</label>
+    <input value="${session.name}" disabled>
+    <p class="muted">يُملأ تلقائياً من حساب الباحث المسجّل دخوله</p>
+    <p class="muted">عدد الأسر في المنزل يُحسب تلقائياً = عدد أقسام الأسر أدناه (<b id="famCountShow">${famDraft.length}</b>)</p>
+  </div>
+  <div id="famList"></div>
+  <button class="btn sec" id="addFamBtn">${icon('plus')} إضافة أسرة أخرى في نفس المنزل</button>
+  <div class="card" style="margin-top:14px">
+    <button class="btn" id="saveHouseBtn" style="width:100%">${icon('save')} حفظ السجل</button>
+  </div>`;
+}
+function familyForm(f,idx,total,opts={}){
+  const showFamNum = total>1;
+  const removeBtn = (total>1 && !opts.hideRemove) ? `<button type="button" class="btn danger sm removeFam" style="float:left">حذف</button>` : '';
+  return `<div class="fam-box" data-id="${f.id}">
+    <h4>بيانات الأسرة ${showFamNum? '#'+(idx+1) : ''} ${removeBtn}</h4>
+    ${showFamNum?`<p class="muted">رقم الأسرة (تلقائي): <b>${idx+1}</b></p>`:''}
+    <div class="row2">
+      <div class="field" data-f="head_name"><label>اسم رب الأسرة *</label><input data-k="head_name" value="${f.head_name}"><div class="err"></div></div>
+      <div class="field" data-f="phone"><label>رقم الهاتف *</label><input data-k="phone" value="${f.phone}"><div class="err"></div></div>
+    </div>
+    <div class="row2">
+      <div class="field" data-f="sons"><label>عدد أفراد الأسرة *</label><input data-k="sons" type="number" min="0" value="${f.sons}"><div class="err"></div></div>
+      <div class="field" data-f="males"><label>عدد الذكور *</label><input data-k="males" type="number" min="0" value="${f.males}"><div class="err"></div></div>
+    </div>
+    <div class="row2">
+      <div class="field" data-f="females"><label>عدد الإناث *</label><input data-k="females" type="number" min="0" value="${f.females}"><div class="err"></div></div>
+      <div class="field" data-f="under5"><label>عدد الأطفال دون سن الخامسة *</label><input data-k="under5" type="number" min="0" value="${f.under5}"><div class="err"></div></div>
+    </div>
+    <div class="row2">
+      <div class="field" data-f="divorced"><label>هل توجد مطلقة ضمن أفراد الأسرة؟ *</label>
+        <select data-k="divorced"><option value="">اختر</option><option ${f.divorced==='نعم'?'selected':''}>نعم</option><option ${f.divorced==='لا'?'selected':''}>لا</option></select><div class="err"></div></div>
+      <div class="field" data-f="widow"><label>هل يوجد أرمل/أرملة؟ *</label>
+        <select data-k="widow"><option value="">اختر</option><option ${f.widow==='نعم'?'selected':''}>نعم</option><option ${f.widow==='لا'?'selected':''}>لا</option></select><div class="err"></div></div>
+    </div>
+    <div class="field" data-f="chronic_disease"><label>هل يوجد فرد مصاب بمرض مزمن؟ *</label>
+      <select data-k="chronic_disease"><option value="">اختر</option><option ${f.chronic_disease==='نعم'?'selected':''}>نعم</option><option ${f.chronic_disease==='لا'?'selected':''}>لا</option></select><div class="err"></div></div>
+    <div class="chronicBox" style="display:${f.chronic_disease==='نعم'?'block':'none'}">
+      <div class="field" data-f="chronic_disease_type"><label>ما نوع المرض المزمن؟ *</label><input data-k="chronic_disease_type" value="${f.chronic_disease_type}"><div class="err"></div></div>
+      <div class="field" data-f="treatment"><label>هل يتلقى علاجاً؟ *</label>
+        <select data-k="treatment"><option value="">اختر</option><option ${f.treatment==='نعم'?'selected':''}>نعم</option><option ${f.treatment==='لا'?'selected':''}>لا</option></select><div class="err"></div></div>
+      <div class="treatBox" style="display:${f.treatment==='نعم'?'block':'none'}">
+        <label>ما نوع العلاج الذي يتلقاه؟</label><input data-k="treatment_type" value="${f.treatment_type}">
+      </div>
+    </div>
+    <div class="field" data-f="disability"><label>هل يوجد فرد لديه إعاقة؟ *</label>
+      <select data-k="disability"><option value="">اختر</option><option ${f.disability==='نعم'?'selected':''}>نعم</option><option ${f.disability==='لا'?'selected':''}>لا</option></select><div class="err"></div></div>
+    <div class="disBox field" data-f="disability_type" style="display:${f.disability==='نعم'?'block':'none'}">
+      <label>ما نوع الإعاقة؟ (اختر واحداً أو أكثر) *</label>
+      ${['إعاقة حركية','إعاقة بصرية','إعاقة ذهنية','اخرى'].map(t=>`<span class="chip ${f.disability_type.includes(t)?'on':''}" data-chip="${t}">${t}</span>`).join('')}
+      <div class="err"></div>
+    </div>
+    <label>ملاحظات الباحث/الباحثة</label>
+    <textarea data-k="notes" rows="2">${f.notes}</textarea>
+  </div>`;
+}
+function renderFamList(){
+  $('#famList').innerHTML=famDraft.map((f,i)=>familyForm(f,i,famDraft.length)).join('');
+  $('#famCountShow').textContent=famDraft.length;
+  bindFamEvents();
+}
+function bindFamEvents(){
+  $$('.fam-box').forEach(box=>{
+    const id=box.dataset.id;
+    const f=famDraft.find(x=>x.id===id);
+    box.querySelectorAll('[data-k]').forEach(inp=>{
+      inp.oninput=inp.onchange=()=>{f[inp.dataset.k]=inp.value;
+        if(inp.dataset.k==='chronic_disease'){box.querySelector('.chronicBox').style.display=inp.value==='نعم'?'block':'none';}
+        if(inp.dataset.k==='treatment'){box.querySelector('.treatBox').style.display=inp.value==='نعم'?'block':'none';}
+        if(inp.dataset.k==='disability'){box.querySelector('.disBox').style.display=inp.value==='نعم'?'block':'none';}
+      };
+    });
+    box.querySelectorAll('[data-chip]').forEach(ch=>{
+      ch.onclick=()=>{
+        const t=ch.dataset.chip;const i=f.disability_type.indexOf(t);
+        if(i>-1)f.disability_type.splice(i,1);else f.disability_type.push(t);
+        ch.classList.toggle('on');
+      };
+    });
+    const rm=box.querySelector('.removeFam');
+    if(rm) rm.onclick=()=>{famDraft=famDraft.filter(x=>x.id!==id);renderFamList()};
+  });
+}
+function bindAdd(){
+  renderFamList();
+  $('#addFamBtn').onclick=()=>{famDraft.push(newFamily());renderFamList()};
+  $('#saveHouseBtn').onclick=async ()=>{
+    if($('#saveHouseBtn').disabled) return;
+    const house={house_number:$('#house_number').value,block_number:$('#block_number').value};
+    const hErr=validateHouse(house);
+    $('#f-house_number').classList.toggle('invalid',!!hErr.house_number);
+    if(hErr.house_number) $('#f-house_number .err').textContent=hErr.house_number;
+    let ok=!hErr.house_number;
+    famDraft.forEach(f=>{
+      const fe=validateFamily(f);
+      const box=document.querySelector(`.fam-box[data-id="${f.id}"]`);
+      box.querySelectorAll('.field').forEach(fl=>{
+        const key=fl.dataset.f;
+        if(fe[key]){fl.classList.add('invalid');fl.querySelector('.err').textContent=fe[key];ok=false;}
+        else fl.classList.remove('invalid');
+      });
+    });
+    if(!ok){toast('يرجى تصحيح الحقول المميزة باللون الأحمر',true);return}
+    const btn=$('#saveHouseBtn');
+    btn.disabled=true;btn.textContent='جارٍ الحفظ في قاعدة البيانات...';
+    try{
+      const {data:houseRow,error:hErr2}=await supabaseClient.from('houses').insert({
+        house_number:house.house_number, block_number:house.block_number||null,
+        researcher_id:session.id, researcher_name:session.name
+      }).select().single();
+      if(hErr2) throw hErr2;
+      const total=famDraft.length;
+      const payload=famDraft.map((f,i)=>({
+        house_id:houseRow.id,
+        family_number: total>1?(i+1):null,
+        head_name:f.head_name, phone:f.phone,
+        sons:Number(f.sons)||0, males:Number(f.males)||0, females:Number(f.females)||0, under5:Number(f.under5)||0,
+        divorced:f.divorced, widow:f.widow, chronic_disease:f.chronic_disease,
+        chronic_disease_type: f.chronic_disease==='نعم' ? (f.chronic_disease_type||null) : null,
+        treatment: f.chronic_disease==='نعم' ? (f.treatment||null) : null,
+        treatment_type: (f.chronic_disease==='نعم' && f.treatment==='نعم') ? (f.treatment_type||null) : null,
+        disability:f.disability,
+        disability_type: f.disability==='نعم' ? f.disability_type : null,
+        notes:f.notes||null, sync_status:'synced', created_by:session.id
+      }));
+      const {error:fErr}=await supabaseClient.from('families').insert(payload);
+      if(fErr) throw fErr;
+      famDraft=[];
+      await refreshAll();
+      toast('تم حفظ السجل بنجاح في قاعدة البيانات ('+total+' أسرة)');
+      nav('search');
+    }catch(err){
+      console.error(err);
+      toast('تعذّر الحفظ: '+(err.message||'خطأ غير معروف، تحقق من اتصالك بالإنترنت'),true);
+      btn.disabled=false;btn.innerHTML=icon('save')+' حفظ السجل';if(window.lucide)lucide.createIcons();
+    }
+  };
+}
+
+// ===== البحث والسجلات =====
+function viewSearch(){
+  const base = session.role==='admin'? houses() : houses().filter(h=>h.researcher_id===session.id);
+  return `
+  <div class="card">
+    <div class="row2">
+      <input id="q" placeholder="ابحث برقم المنزل / رقم الأسرة / اسم رب الأسرة / الهاتف">
+      <select id="sortBy"><option value="date">ترتيب حسب التاريخ (الأحدث)</option><option value="house">ترتيب حسب رقم المنزل</option></select>
+    </div>
+  </div>
+  <div id="resultsWrap"></div>`;
+}
+function bindSearch(){
+  const doSearch=()=>{
+    const q=$('#q').value.trim();
+    const sortBy=$('#sortBy').value;
+    let base = session.role==='admin'? houses() : houses().filter(h=>h.researcher_id===session.id);
+    let rows=[];
+    base.forEach(h=>h.families.forEach(f=>rows.push({h,f})));
+    if(q) rows=rows.filter(({h,f})=> String(h.house_number).includes(q) || String(f.family_number||'').includes(q) || (f.head_name||'').includes(q) || (f.phone||'').includes(q));
+    rows.sort((a,b)=> sortBy==='house'? a.h.house_number-b.h.house_number : new Date(b.h.created_at)-new Date(a.h.created_at));
+    $('#resultsWrap').innerHTML = rows.length? `
+      <div class="card">
+        <div class="tblwrap"><table>
+          <tr><th>رقم المنزل</th><th>رقم الأسرة</th><th>رب الأسرة</th><th>الهاتف</th><th>الباحث</th><th>الحالة</th><th></th></tr>
+          ${rows.map(({h,f})=>`<tr>
+            <td>${h.house_number}</td><td>${f.family_number||'-'}</td><td>${f.head_name}</td><td>${f.phone}</td><td>${h.researcher_name}</td>
+            <td><span class="badge ${f.sync_status==='synced'?'b-ok':'b-warn'}">${f.sync_status==='synced'?'متزامن':'محفوظ محلياً'}</span></td>
+            <td>
+              <button class="btn sm sec viewBtn" data-h="${h.id}" data-f="${f.id}">${icon('eye',14)} عرض</button>
+            </td>
+          </tr>`).join('')}
+        </table></div>
+        <p class="muted" style="margin-top:8px">${rows.length} نتيجة معروضة (التصدير أدناه يشمل كل السجلات المحفوظة ضمن صلاحيتك، وليس فقط نتائج البحث الحالية)</p>
+        <div class="pdfbar">
+          <button class="btn sec sm" id="exportFullPdf">${icon('file-down',14)} تصدير جميع البيانات PDF</button>
+          <button class="btn sec sm" id="exportSummaryPdf">${icon('file-down',14)} تصدير بيانات الأسر PDF</button>
+        </div>
+      </div>` : '<div class="card"><p class="empty">لا توجد نتائج مطابقة</p></div>';
+    $$('.viewBtn').forEach(b=>b.onclick=()=>{viewHouseId=b.dataset.h;editHouseId=b.dataset.f;detailReturnRoute='search';nav('detail')});
+    const fullBtn=$('#exportFullPdf'), sumBtn=$('#exportSummaryPdf');
+    if(fullBtn) fullBtn.onclick=()=>runExport(fullBtn,exportFullPdf);
+    if(sumBtn) sumBtn.onclick=()=>runExport(sumBtn,exportSummaryPdf);
+  };
+  $('#q').oninput=doSearch;$('#sortBy').onchange=doSearch;
+  doSearch();
+}
+// ===== تصدير PDF (يشمل كل السجلات المحفوظة ضمن صلاحية المستخدم، وليس فقط نتائج البحث) =====
+function allScopedRows(){
+  const base = session.role==='admin'? houses() : houses().filter(h=>h.researcher_id===session.id);
+  const rows=[];
+  base.forEach(h=>h.families.forEach(f=>rows.push({h,f})));
+  rows.sort((a,b)=> new Date(a.h.created_at)-new Date(b.h.created_at));
+  return rows;
+}
+function chunk(arr,n){const out=[];for(let i=0;i<arr.length;i+=n)out.push(arr.slice(i,i+n));return out}
+// كل أسر الحي من جميع الباحثين (متاحة للقراءة فقط لكل من المدير والباحث - بدون تقييد بالباحث الحالي)
+function allNeighborhoodRows(){
+  const rows=[];
+  houses().forEach(h=>h.families.forEach(f=>rows.push({h,f})));
+  return rows;
+}
+const FULL_COLUMNS=[
+  {label:'رقم المنزل',get:h=>h.house_number},
+  {label:'رقم الأسرة',get:(h,f)=>f.family_number||'-'},
+  {label:'اسم رب الأسرة',get:(h,f)=>f.head_name},
+  {label:'رقم الهاتف',get:(h,f)=>f.phone},
+  {label:'أفراد الأسرة',get:(h,f)=>f.sons},
+  {label:'الذكور',get:(h,f)=>f.males},
+  {label:'الإناث',get:(h,f)=>f.females},
+  {label:'دون 5 سنوات',get:(h,f)=>f.under5},
+  {label:'مطلقة',get:(h,f)=>f.divorced},
+  {label:'أرمل/أرملة',get:(h,f)=>f.widow},
+  {label:'مرض مزمن',get:(h,f)=>f.chronic_disease},
+  {label:'نوع المرض',get:(h,f)=>f.chronic_disease==='نعم'?(f.chronic_disease_type||'-'):'-'},
+  {label:'يتلقى علاجاً',get:(h,f)=>f.chronic_disease==='نعم'?(f.treatment||'-'):'-'},
+  {label:'نوع العلاج',get:(h,f)=>f.treatment==='نعم'?(f.treatment_type||'-'):'-'},
+  {label:'إعاقة',get:(h,f)=>f.disability},
+  {label:'نوع الإعاقة',get:(h,f)=>f.disability==='نعم'?(f.disability_type||[]).join('، '):'-'},
+  {label:'ملاحظات',get:(h,f)=>f.notes||'-'},
+  {label:'الباحث',get:h=>h.researcher_name},
+  {label:'تاريخ التسجيل',get:h=>fmt(h.created_at)},
+  {label:'حالة المزامنة',get:(h,f)=>f.sync_status==='synced'?'متزامن':'محفوظ محلياً'},
+];
+// حقول الاستبيان الأصلية فقط بنفس ترتيبها في نموذج تسجيل الأسرة (بدون أي عمود إداري/إحصائي مضاف)
+const SURVEY_COLUMNS=[
+  {label:'رقم المنزل',width:65,get:h=>h.house_number},
+  {label:'رقم المربع',width:65,get:h=>h.block_number||'-'},
+  {label:'عدد الأسر',width:60,get:h=>h.families.length},
+  {label:'اسم الباحث',width:105,wrap:true,get:h=>h.researcher_name},
+  {label:'رقم الأسرة',width:60,get:(h,f)=>f.family_number||'-'},
+  {label:'رب الأسرة',width:125,wrap:true,get:(h,f)=>f.head_name},
+  {label:'الهاتف',width:95,get:(h,f)=>f.phone},
+  {label:'أفراد الأسرة',width:70,get:(h,f)=>f.sons},
+  {label:'الذكور',width:50,get:(h,f)=>f.males},
+  {label:'الإناث',width:50,get:(h,f)=>f.females},
+  {label:'دون 5 سنوات',width:65,get:(h,f)=>f.under5},
+  {label:'مطلقة',width:50,get:(h,f)=>f.divorced},
+  {label:'أرمل/أرملة',width:65,get:(h,f)=>f.widow},
+  {label:'مرض مزمن',width:60,get:(h,f)=>f.chronic_disease},
+  {label:'نوع المرض',width:105,wrap:true,get:(h,f)=>f.chronic_disease==='نعم'?(f.chronic_disease_type||'-'):'-'},
+  {label:'يتلقى علاجاً',width:70,get:(h,f)=>f.chronic_disease==='نعم'?(f.treatment||'-'):'-'},
+  {label:'نوع العلاج',width:115,wrap:true,get:(h,f)=>f.treatment==='نعم'?(f.treatment_type||'-'):'-'},
+  {label:'إعاقة',width:50,get:(h,f)=>f.disability},
+  {label:'نوع الإعاقة',width:105,wrap:true,get:(h,f)=>f.disability==='نعم'?(f.disability_type||[]).join('، '):'-'},
+  {label:'ملاحظات',width:150,wrap:true,get:(h,f)=>f.notes||'-'},
+];
+const SUMMARY_COLUMNS=[
+  {label:'رقم المنزل',width:110,get:h=>h.house_number},
+  {label:'اسم رب الأسرة',width:280,wrap:true,get:(h,f)=>f.head_name},
+  {label:'رقم الهاتف',width:170,get:(h,f)=>f.phone},
+];
+function exportCsvFull(rows,filename){
+  const lines=[FULL_COLUMNS.map(c=>c.label).join(',')].concat(
+    rows.map(({h,f})=>FULL_COLUMNS.map(c=>`"${String(c.get(h,f)??'-').replace(/"/g,'""')}"`).join(','))
+  );
+  const csv='\uFEFF'+lines.join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();
+}
+async function runExport(btn,fn,getRows){
+  if(btn.disabled) return;
+  const orig=btn.innerHTML;
+  btn.disabled=true;btn.textContent='جارٍ إنشاء الملف...';
+  try{
+    const rows=(getRows||allScopedRows)();
+    if(rows.length===0){toast('لا توجد بيانات محفوظة للتصدير',true);return}
+    await fn(rows);
+    toast('تم إنشاء الملف بنجاح ('+rows.length+' سجل)');
+  }catch(err){
+    console.error(err);
+    toast('تعذّر إنشاء الملف، حاول مرة أخرى',true);
+  }finally{
+    btn.disabled=false;btn.innerHTML=orig;if(window.lucide)lucide.createIcons();
+  }
+}
+const PDF_MARGIN_MM=8; // هامش آمن موحّد على الجهات الأربع لجميع ملفات PDF المُصدَّرة
+async function buildPdf({rows,columns,title,filename,orientation,rowsPerPage}){
+  if(document.fonts && document.fonts.ready) await document.fonts.ready; // ضمان اكتمال تحميل خط Cairo قبل أي قياس أو التقاط، لتفادي قصّ الأعمدة
+  const { jsPDF } = window.jspdf;
+  const pdf=new jsPDF({orientation,unit:'mm',format:'a4'});
+  const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
+  const availW=pageW-PDF_MARGIN_MM*2, availH=pageH-PDF_MARGIN_MM*2;
+  const pages=chunk(rows,rowsPerPage);
+  const genDate=new Date().toLocaleString('ar-EG',{dateStyle:'long',timeStyle:'short'});
+  // عرض كل عمود محسوب مسبقاً وثابت (بدل القياس التلقائي الذي كان يتأثر بتأخر تحميل الخط) — يضمن عرضاً كلياً معروفاً للجدول ولا يقصّ أي عمود
+  const totalWidthPx = columns.reduce((s,c)=>s+(c.width||90),0);
+  let root=document.getElementById('pdfExportRoot');
+  if(root) root.remove();
+  root=document.createElement('div');root.id='pdfExportRoot';document.body.appendChild(root);
+  for(let i=0;i<pages.length;i++){
+    const pageRows=pages[i];
+    const div=document.createElement('div');
+    div.className='pdfPage';
+    div.style.width=totalWidthPx+'px';
+    div.innerHTML=`
+      <h2>${title}</h2>
+      <div class="pmeta">تاريخ الإنشاء: ${genDate} — عدد السجلات الكلي: ${rows.length} — صفحة ${i+1} من ${pages.length}</div>
+      <table>
+        <colgroup>${columns.map(c=>`<col style="width:${c.width||90}px">`).join('')}</colgroup>
+        <thead><tr>${columns.map(c=>`<th class="${c.wrap?'wrap':''}">${c.label}</th>`).join('')}</tr></thead>
+        <tbody>${pageRows.map(({h,f})=>`<tr>${columns.map(c=>`<td class="${c.wrap?'wrap':''}">${(c.get(h,f)??'-')||'-'}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table>
+      <div class="pfoot">نظام حصر الأسر — ملف مُصدَّر آلياً — صفحة ${i+1}/${pages.length}</div>`;
+    root.appendChild(div);
+    const canvas=await html2canvas(div,{scale:2,backgroundColor:'#ffffff',width:totalWidthPx,windowWidth:totalWidthPx});
+    const imgData=canvas.toDataURL('image/png');
+    const ratio=canvas.height/canvas.width;
+    let imgW=availW, imgH=imgW*ratio;
+    if(imgH>availH){imgH=availH;imgW=imgH/ratio;} // تصغير إضافي إن كان الصف طويلاً جداً حتى لا يخرج عن هامش الصفحة السفلي
+    const x=PDF_MARGIN_MM+(availW-imgW)/2, y=PDF_MARGIN_MM;
+    if(i>0) pdf.addPage();
+    pdf.addImage(imgData,'PNG',x,y,imgW,imgH);
+    root.removeChild(div);
+  }
+  root.remove();
+  pdf.save(filename);
+}
+// PDF مخصّص لأسرة واحدة فقط: جدول عمودين بالطول (اسم الحقل يميناً / الإجابة يساراً)، صف مستقل لكل حقل
+async function buildSingleFamilyPdf(h,f){
+  if(document.fonts && document.fonts.ready) await document.fonts.ready;
+  const { jsPDF } = window.jspdf;
+  const pdf=new jsPDF({orientation:'p',unit:'mm',format:'a4'});
+  const pageW=pdf.internal.pageSize.getWidth(), pageH=pdf.internal.pageSize.getHeight();
+  const availW=pageW-PDF_MARGIN_MM*2, availH=pageH-PDF_MARGIN_MM*2;
+  const rowsPerPage=20;
+  const chunks=chunk(SURVEY_COLUMNS,rowsPerPage);
+  const genDate=new Date().toLocaleString('ar-EG',{dateStyle:'long',timeStyle:'short'});
+  const pagePadding=14; // هامش داخلي صغير ومتوازن داخل صفحة PDF
+  const tableWidthPx=660, labelWidthPx=200; // مجموع عرضي العمودين = عرض الجدول الفعلي تماماً، بلا أي فارق يفرض تصغيراً تناسبياً
+  const totalWidthPx=tableWidthPx+pagePadding*2;
+  let root=document.getElementById('pdfExportRoot');
+  if(root) root.remove();
+  root=document.createElement('div');root.id='pdfExportRoot';document.body.appendChild(root);
+  for(let i=0;i<chunks.length;i++){
+    const div=document.createElement('div');
+    div.className='pdfPage';
+    div.dir='rtl';
+    div.style.width=totalWidthPx+'px';
+    div.innerHTML=`
+      <h2>بيانات الأسرة</h2>
+      <div class="pmeta">رقم المنزل: ${h.house_number} — اسم رب الأسرة: ${f.head_name} — تاريخ الإنشاء: ${genDate} — صفحة ${i+1} من ${chunks.length}</div>
+      <table class="field-table" dir="rtl" style="width:${tableWidthPx}px">
+        <colgroup><col style="width:${labelWidthPx}px"><col style="width:${tableWidthPx-labelWidthPx}px"></colgroup>
+        <thead><tr><th class="flabel">البيان</th><th>الإجابة</th></tr></thead>
+        <tbody>${chunks[i].map(c=>`<tr><td class="flabel">${c.label}</td><td class="fval wrap">${(c.get(h,f)??'-')||'-'}</td></tr>`).join('')}</tbody>
+      </table>
+      <div class="pfoot">نظام حصر الأسر — بيانات أسرة — صفحة ${i+1}/${chunks.length}</div>`;
+    root.appendChild(div);
+    const canvas=await html2canvas(div,{scale:2,backgroundColor:'#ffffff',width:totalWidthPx,windowWidth:totalWidthPx});
+    const imgData=canvas.toDataURL('image/png');
+    const ratio=canvas.height/canvas.width;
+    let imgW=availW, imgH=imgW*ratio;
+    if(imgH>availH){imgH=availH;imgW=imgH/ratio;}
+    const x=PDF_MARGIN_MM+(availW-imgW)/2, y=PDF_MARGIN_MM;
+    if(i>0) pdf.addPage();
+    pdf.addImage(imgData,'PNG',x,y,imgW,imgH);
+    root.removeChild(div);
+  }
+  root.remove();
+  pdf.save(`بيانات_أسرة_منزل_${h.house_number}${f.family_number?('_'+f.family_number):''}.pdf`);
+}
+async function exportFullPdf(rows){
+  await buildPdf({rows,columns:SURVEY_COLUMNS,title:'كشف جميع بيانات الأسر',filename:'جميع_بيانات_الأسر.pdf',orientation:'l',rowsPerPage:10});
+}
+async function exportSummaryPdf(rows){
+  await buildPdf({rows,columns:SUMMARY_COLUMNS,title:'كشف مختصر بالأسر (رقم المنزل - رب الأسرة - الهاتف)',filename:'كشف_مختصر_الأسر.pdf',orientation:'p',rowsPerPage:30});
+}
+
+// ===== نافذة تفاصيل الأسرة المنبثقة (تُستخدم من شاشة جميع أسر الحي) =====
+function closeFamilyModal(){const o=document.getElementById('familyModalOverlay');if(o)o.remove()}
+function openFamilyModal(hId,fId){
+  const h=houses().find(x=>x.id===hId); if(!h){toast('السجل غير موجود',true);return}
+  const f=h.families.find(x=>x.id===fId); if(!f){toast('السجل غير موجود',true);return}
+  closeFamilyModal();
+  const overlay=document.createElement('div');
+  overlay.id='familyModalOverlay';overlay.className='modal-overlay';
+  overlay.innerHTML=`<div class="modal-box" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h3>تفاصيل الأسرة</h3>
+      <button class="modal-close" id="modalCloseBtn">${icon('x',20)}</button>
+    </div>
+    <div class="modal-body">
+      ${SURVEY_COLUMNS.map(c=>`<div class="modal-row"><span class="mrow-label">${c.label}</span><span class="mrow-val">${c.get(h,f)}</span></div>`).join('')}
+      ${f.updated_by?`<div class="modal-row"><span class="mrow-label">آخر تعديل</span><span class="mrow-val">${f.updated_by} — ${fmt(f.updated_at)}</span></div>`:''}
+      <div class="modal-row"><span class="mrow-label">حالة المزامنة</span><span class="mrow-val">${f.sync_status==='synced'?'متزامن':'محفوظ محلياً'}</span></div>
+    </div>
+    <div class="modal-foot">
+      ${canEditFamily(h)?`<button class="btn sec sm" id="modalEditBtn">${icon('pencil',14)} تعديل</button><button class="btn danger sm" id="modalDelBtn">${icon('trash-2',14)} حذف</button>`:''}
+      <button class="btn sm" id="modalPdfBtn">${icon('file-down',14)} حفظ PDF</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  overlay.onclick=(e)=>{if(e.target===overlay) closeFamilyModal()};
+  $('#modalCloseBtn').onclick=closeFamilyModal;
+  const editBtn=$('#modalEditBtn');
+  if(editBtn) editBtn.onclick=()=>{closeFamilyModal();startEditFamily(hId,fId,'neighborhood')};
+  const delBtn=$('#modalDelBtn');
+  if(delBtn) delBtn.onclick=()=>{closeFamilyModal();deleteFamily(hId,fId,'neighborhood')};
+  const pdfBtn=$('#modalPdfBtn');
+  pdfBtn.onclick=async()=>{
+    if(pdfBtn.disabled) return;
+    const orig=pdfBtn.innerHTML;
+    pdfBtn.disabled=true;pdfBtn.textContent='جارٍ الإنشاء...';
+    try{
+      await buildSingleFamilyPdf(h,f);
+      toast('تم إنشاء ملف PDF للأسرة بنجاح');
+    }catch(err){console.error(err);toast('تعذّر إنشاء الملف، حاول مرة أخرى',true);}
+    finally{pdfBtn.disabled=false;pdfBtn.innerHTML=orig;if(window.lucide)lucide.createIcons();}
+  };
+  if(window.lucide) lucide.createIcons();
+}
+
+// ===== جميع أسر الحي (لكل من المدير والباحث - قراءة فقط، بدون تعديل/حذف) =====
+function viewNeighborhood(){
+  const researchers=[...new Set(houses().map(h=>h.researcher_name))];
+  return `
+  <div class="card">
+    <p class="muted">تعرض هذه القائمة جميع الأسر المسجَّلة في الحي بواسطة كل الباحثين مجتمعين. يمكن للباحث الاطلاع عليها والبحث والتصدير منها، دون صلاحية تعديل أو حذف سجلات باحثين آخرين.</p>
+    <div class="row2">
+      <input id="nq" placeholder="ابحث برقم المنزل / رقم الأسرة / اسم رب الأسرة / الهاتف">
+      <select id="nSortBy"><option value="date">ترتيب حسب تاريخ التسجيل (الأحدث)</option><option value="house">ترتيب حسب رقم المنزل</option></select>
+    </div>
+    <div class="row2" style="margin-top:10px">
+      <select id="nResearcher"><option value="">كل الباحثين</option>${researchers.map(r=>`<option value="${r}">${r}</option>`).join('')}</select>
+      <div></div>
+    </div>
+    <div class="pdfbar">
+      <button class="btn sec sm" id="nFullPdf">${icon('file-down',14)} تصدير جميع البيانات PDF</button>
+      <button class="btn sec sm" id="nSummaryPdf">${icon('file-down',14)} تصدير بيانات الأسر PDF</button>
+      <button class="btn sec sm" id="nCsv">${icon('sheet',14)} تصدير CSV</button>
+    </div>
+  </div>
+  <div id="nResultsWrap"></div>`;
+}
+function bindNeighborhood(){
+  const doSearch=()=>{
+    const q=$('#nq').value.trim();
+    const sortBy=$('#nSortBy').value;
+    const rf=$('#nResearcher').value;
+    let rows=allNeighborhoodRows();
+    if(rf) rows=rows.filter(({h})=>h.researcher_name===rf);
+    if(q) rows=rows.filter(({h,f})=> String(h.house_number).includes(q) || String(f.family_number||'').includes(q) || (f.head_name||'').includes(q) || (f.phone||'').includes(q));
+    rows.sort((a,b)=> sortBy==='house'? a.h.house_number-b.h.house_number : new Date(b.h.created_at)-new Date(a.h.created_at));
+    $('#nResultsWrap').innerHTML = rows.length? `
+      <div class="card">
+        <p class="muted" style="margin-top:0">إجمالي الأسر المسجلة في الحي: <b>${allNeighborhoodRows().length}</b> — نتائج البحث الحالية: ${rows.length}</p>
+        <div class="tblwrap"><table>
+          <tr><th>رقم المنزل</th><th>رقم الأسرة</th><th>رب الأسرة</th><th>الهاتف</th><th>الباحث</th><th>تاريخ التسجيل</th><th></th></tr>
+          ${rows.map(({h,f})=>`<tr class="fam-row" data-h="${h.id}" data-f="${f.id}">
+            <td>${h.house_number}</td><td>${f.family_number||'-'}</td><td>${f.head_name}</td><td>${f.phone}</td><td>${h.researcher_name}</td><td>${fmt(h.created_at)}</td>
+            <td style="white-space:nowrap"><button class="btn sm sec nDetailBtn" data-h="${h.id}" data-f="${f.id}">${icon('eye',14)} عرض التفاصيل</button></td>
+          </tr>`).join('')}
+        </table></div>
+      </div>` : '<div class="card"><p class="empty">لا توجد نتائج مطابقة</p></div>';
+    $$('.fam-row').forEach(tr=>tr.onclick=(e)=>{if(e.target.closest('.nDetailBtn'))return;openFamilyModal(tr.dataset.h,tr.dataset.f)});
+    $$('.nDetailBtn').forEach(b=>b.onclick=(e)=>{e.stopPropagation();openFamilyModal(b.dataset.h,b.dataset.f)});
+  };
+  $('#nq').oninput=doSearch;$('#nSortBy').onchange=doSearch;$('#nResearcher').onchange=doSearch;
+  $('#nFullPdf').onclick=()=>runExport($('#nFullPdf'),exportFullPdf,allNeighborhoodRows);
+  $('#nSummaryPdf').onclick=()=>runExport($('#nSummaryPdf'),exportSummaryPdf,allNeighborhoodRows);
+  $('#nCsv').onclick=()=>{
+    const rows=allNeighborhoodRows();
+    if(rows.length===0){toast('لا توجد بيانات محفوظة للتصدير',true);return}
+    exportCsvFull(rows,'جميع_أسر_الحي.csv');
+    toast('تم تصدير ملف CSV بنجاح ('+rows.length+' سجل)');
+  };
+  doSearch();
+}
+
+// ===== تعديل بيانات منزل وأسرة موجودة (وفق الصلاحية فقط) =====
+function viewEditFamily(){
+  const h=houses().find(x=>x.id===editTargetHouseId);
+  if(!h || !editFamilyDraft) return '<div class="card"><p class="empty">السجل غير موجود</p></div>';
+  const idx=h.families.findIndex(x=>x.id===editTargetFamilyId);
+  return `
+  <div class="card">
+    <button class="btn sec sm" id="editBackBtn">← رجوع بدون حفظ</button>
+    <h3 style="margin-top:10px">تعديل بيانات المنزل والأسرة</h3>
+    <div class="row2">
+      <div class="field" id="ef-house_number"><label>رقم المنزل *</label><input id="editHouseNumber" type="number" min="0" value="${editHouseFields.house_number}"><div class="err"></div></div>
+      <div class="field"><label>رقم المربع</label><input id="editBlockNumber" type="number" min="0" value="${editHouseFields.block_number||''}"></div>
+    </div>
+  </div>
+  <div id="editFamBox">${familyForm(editFamilyDraft,idx,h.families.length,{hideRemove:true})}</div>
+  <div class="card" style="margin-top:14px">
+    <button class="btn" id="saveEditBtn" style="width:100%">${icon('save')} حفظ التعديلات</button>
+  </div>`;
+}
+function bindEditFamily(){
+  const box=document.querySelector('.fam-box');
+  box.querySelectorAll('[data-k]').forEach(inp=>{
+    inp.oninput=inp.onchange=()=>{editFamilyDraft[inp.dataset.k]=inp.value;
+      if(inp.dataset.k==='chronic_disease'){box.querySelector('.chronicBox').style.display=inp.value==='نعم'?'block':'none';}
+      if(inp.dataset.k==='treatment'){box.querySelector('.treatBox').style.display=inp.value==='نعم'?'block':'none';}
+      if(inp.dataset.k==='disability'){box.querySelector('.disBox').style.display=inp.value==='نعم'?'block':'none';}
+    };
+  });
+  box.querySelectorAll('[data-chip]').forEach(ch=>{
+    ch.onclick=()=>{
+      const t=ch.dataset.chip;const i=editFamilyDraft.disability_type.indexOf(t);
+      if(i>-1)editFamilyDraft.disability_type.splice(i,1);else editFamilyDraft.disability_type.push(t);
+      ch.classList.toggle('on');
+    };
+  });
+  $('#editBackBtn').onclick=()=>nav(detailReturnRoute);
+  $('#saveEditBtn').onclick=async ()=>{
+    const btn=$('#saveEditBtn');
+    if(btn.disabled) return;
+    const house={house_number:$('#editHouseNumber').value,block_number:$('#editBlockNumber').value};
+    const hErr=validateHouse(house);
+    $('#ef-house_number').classList.toggle('invalid',!!hErr.house_number);
+    if(hErr.house_number) $('#ef-house_number .err').textContent=hErr.house_number;
+    let ok=!hErr.house_number;
+    const fe=validateFamily(editFamilyDraft);
+    box.querySelectorAll('.field').forEach(fl=>{
+      const key=fl.dataset.f;
+      if(fe[key]){fl.classList.add('invalid');fl.querySelector('.err').textContent=fe[key];ok=false;}
+      else fl.classList.remove('invalid');
+    });
+    if(!ok){toast('يرجى تصحيح الحقول المميزة باللون الأحمر',true);return}
+    const hh=houses().find(x=>x.id===editTargetHouseId);
+    if(!canEditFamily(hh)){toast('ليست لديك صلاحية تعديل هذا السجل',true);return}
+    btn.disabled=true;btn.textContent='جارٍ الحفظ...';
+    try{
+      const {error:hErr2}=await supabaseClient.from('houses').update({house_number:house.house_number,block_number:house.block_number||null}).eq('id',editTargetHouseId);
+      if(hErr2) throw hErr2;
+      const f=editFamilyDraft;
+      const payload={
+        head_name:f.head_name, phone:f.phone,
+        sons:Number(f.sons)||0, males:Number(f.males)||0, females:Number(f.females)||0, under5:Number(f.under5)||0,
+        divorced:f.divorced, widow:f.widow, chronic_disease:f.chronic_disease,
+        chronic_disease_type: f.chronic_disease==='نعم' ? (f.chronic_disease_type||null) : null,
+        treatment: f.chronic_disease==='نعم' ? (f.treatment||null) : null,
+        treatment_type: (f.chronic_disease==='نعم' && f.treatment==='نعم') ? (f.treatment_type||null) : null,
+        disability:f.disability, disability_type: f.disability==='نعم' ? f.disability_type : null,
+        notes:f.notes||null, updated_by:session.name
+      };
+      const {error:fErr}=await supabaseClient.from('families').update(payload).eq('id',editTargetFamilyId);
+      if(fErr) throw fErr;
+      await refreshAll();
+      toast('تم حفظ التعديلات بنجاح في قاعدة البيانات');
+      viewHouseId=editTargetHouseId;editHouseId=editTargetFamilyId;
+      nav('detail');
+    }catch(err){
+      console.error(err);
+      toast('تعذّر حفظ التعديلات: '+(err.message||'خطأ غير معروف'),true);
+      btn.disabled=false;btn.innerHTML=icon('save')+' حفظ التعديلات';if(window.lucide)lucide.createIcons();
+    }
+  };
+}
+
+// ===== تفاصيل السجل =====
+function viewDetail(){
+  const h=houses().find(x=>x.id===viewHouseId);
+  if(!h) return '<div class="card"><p class="empty">السجل غير موجود</p></div>';
+  const f=h.families.find(x=>x.id===editHouseId);
+  return `<div class="card">
+    <button class="btn sec sm" id="backBtn">← رجوع</button>
+    <h3>منزل رقم ${h.house_number} ${h.block_number?('- مربع '+h.block_number):''}</h3>
+    <p class="muted">الباحث: ${h.researcher_name} • أُنشئ: ${fmt(h.created_at)} • آخر تعديل: ${fmt(h.updated_at)}</p>
+    <span class="badge ${f.sync_status==='synced'?'b-ok':'b-warn'}">${f.sync_status==='synced'?'متزامن':'بانتظار المزامنة'}</span>
+    ${f.updated_by?`<p class="muted">آخر تعديل بواسطة: ${f.updated_by} — ${fmt(f.updated_at)}</p>`:''}
+    <div style="margin-top:10px">
+      <button class="btn sm" onclick="window.print()">${icon('printer',14)} طباعة</button>
+      ${canEditFamily(h)?`<button class="btn sm sec" id="detEditBtn">${icon('pencil',14)} تعديل</button><button class="btn sm danger" id="detDelBtn">${icon('trash-2',14)} حذف</button>`:''}
+    </div>
+    <hr style="border-color:var(--bd);margin:14px 0">
+    <table>
+      ${f.family_number?`<tr><th>رقم الأسرة</th><td>${f.family_number}</td></tr>`:''}
+      <tr><th>اسم رب الأسرة</th><td>${f.head_name}</td></tr>
+      <tr><th>رقم الهاتف</th><td>${f.phone}</td></tr>
+      <tr><th>عدد أفراد الأسرة</th><td>${f.sons}</td></tr>
+      <tr><th>عدد الذكور</th><td>${f.males}</td></tr>
+      <tr><th>عدد الإناث</th><td>${f.females}</td></tr>
+      <tr><th>أطفال دون 5 سنوات</th><td>${f.under5}</td></tr>
+      <tr><th>مطلقة ضمن الأسرة</th><td>${f.divorced}</td></tr>
+      <tr><th>أرمل/أرملة ضمن الأسرة</th><td>${f.widow}</td></tr>
+      <tr><th>مرض مزمن</th><td>${f.chronic_disease}${f.chronic_disease==='نعم'?' - '+f.chronic_disease_type:''}</td></tr>
+      ${f.chronic_disease==='نعم'?`<tr><th>يتلقى علاجاً</th><td>${f.treatment}${f.treatment==='نعم'&&f.treatment_type?' - '+f.treatment_type:''}</td></tr>`:''}
+      <tr><th>إعاقة</th><td>${f.disability}${f.disability==='نعم'?' - '+f.disability_type.join('، '):''}</td></tr>
+      <tr><th>ملاحظات</th><td>${f.notes||'-'}</td></tr>
+    </table>
+  </div>`;
+}
+function bindDetail(){
+  $('#backBtn').onclick=()=>nav(detailReturnRoute);
+  const editBtn=$('#detEditBtn'), delBtn=$('#detDelBtn');
+  if(editBtn) editBtn.onclick=()=>startEditFamily(viewHouseId,editHouseId,detailReturnRoute);
+  if(delBtn) delBtn.onclick=()=>deleteFamily(viewHouseId,editHouseId,detailReturnRoute);
+}
+
+// ===== إدارة الباحثين والمديرين (مدير فقط) =====
+let editingUserId=null;
+const ROLE_LABEL={admin:'مدير',researcher:'باحث'};
+function jobTitleSelect(id,selected){
+  return `<select id="${id}"><option value="researcher" ${selected==='researcher'?'selected':''}>باحث</option><option value="admin" ${selected==='admin'?'selected':''}>مدير</option></select>`;
+}
+function viewResearchers(){
+  if(session.role!=='admin') return '<div class="card"><p class="empty">هذه الصفحة للمدير فقط</p></div>';
+  const list=users();
+  const H=houses();
+  const editingUser=editingUserId? list.find(u=>u.id===editingUserId):null;
+  const isSelf=editingUser && editingUser.id===session.id;
+  return `
+  <div class="card">
+    ${editingUser?`
+      <h3 style="margin-top:0">تعديل بيانات المستخدم</h3>
+      <div class="field" id="f-eu"><label>الاسم الكامل</label><input id="editName" value="${editingUser.name}"><div class="err">مطلوب</div></div>
+      <label>البريد الإلكتروني</label>
+      <input value="${editingUser.email||''}" disabled>
+      <p class="muted">لا يمكن تغيير البريد الإلكتروني لحساب آخر من هنا (قيد تقني من Supabase Auth على الواجهة الأمامية).</p>
+      <label>المسمى الوظيفي</label>
+      ${jobTitleSelect('editRole',editingUser.role)}
+      ${isSelf?`
+        <label>كلمة مرور جديدة (اختياري — اتركه فارغاً لعدم التغيير)</label>
+        <input id="editPass" type="text">
+      `:`
+        <div class="field" style="margin-top:10px">
+          <label>كلمة المرور</label>
+          <button type="button" class="btn sec sm" id="sendResetBtn">${icon('mail',14)} إرسال رابط إعادة تعيين كلمة المرور بالبريد</button>
+          <p class="muted">لا يمكن تعيين كلمة مرور لمستخدم آخر مباشرة من المتصفح لأسباب أمنية؛ هذا يرسل له رابطاً آمناً عبر Supabase ليضع كلمة مروره بنفسه.</p>
+        </div>
+      `}
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn" id="saveUserBtn">${icon('save',16)} حفظ التعديلات</button>
+        <button class="btn sec" id="cancelEditUserBtn">إلغاء</button>
+      </div>
+    `:`
+      <h3 style="margin-top:0">إضافة مستخدم جديد</h3>
+      <p class="muted">اسم المستخدم للدخول فقط، بينما الاسم الكامل هو الذي يظهر داخل النظام وفي المعاملات. البريد الإلكتروني يبقى مرتبطاً بحساب Supabase Auth.</p>
+      <div class="row2">
+        <div class="field" id="f-nun"><label>اسم المستخدم</label><input id="newUsername" type="text" autocomplete="off"><div class="err">مطلوب — يجب أن يكون فريداً</div></div>
+        <div class="field" id="f-nu"><label>الاسم الكامل</label><input id="newName"><div class="err">مطلوب</div></div>
+      </div>
+      <div class="row2">
+        <div class="field" id="f-ne"><label>البريد الإلكتروني</label><input id="newUser" type="email"><div class="err">مطلوب / غير صالح</div></div>
+        <div></div>
+      </div>
+      <div class="row2">
+        <div class="field" id="f-np"><label>كلمة مرور مبدئية</label><input id="newPass" type="text"><div class="err">6 أحرف على الأقل</div></div>
+        <div class="field"><label>المسمى الوظيفي</label>${jobTitleSelect('newRole','researcher')}</div>
+      </div>
+      <button class="btn" id="addResBtn" style="margin-top:10px">${icon('user-plus')} إضافة المستخدم</button>
+    `}
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">المستخدمون (${list.length})</h3>
+    <div class="tblwrap"><table>
+      <tr><th>الاسم</th><th>البريد الإلكتروني</th><th>المسمى الوظيفي</th><th>عدد السجلات</th><th>الحالة</th><th></th></tr>
+      ${list.map(u=>{
+        const cnt=H.filter(h=>h.researcher_id===u.id).reduce((s,h)=>s+h.families.length,0);
+        const statusLabel=u.deleted?'محذوف':(u.active?'مفعّل':'معطّل');
+        const statusClass=u.deleted?'b-warn':(u.active?'b-ok':'b-warn');
+        return `<tr>
+          <td>${u.name}</td><td>${u.email||'-'}</td><td>${ROLE_LABEL[u.role]||u.role}</td><td>${cnt}</td>
+          <td><span class="badge ${statusClass}">${statusLabel}</span></td>
+          <td style="white-space:nowrap">
+            ${u.deleted?'<span class="muted">لا إجراءات</span>':`
+            <button class="btn sm sec editUserBtn" data-id="${u.id}" style="display:inline-flex">${icon('pencil',14)} تعديل</button>
+            <button class="btn sm danger delUserBtn" data-id="${u.id}" style="display:inline-flex">${icon('trash-2',14)} حذف</button>`}
+          </td>
+        </tr>`;
+      }).join('')}
+    </table></div>
+    ${list.length===0?'<p class="empty">لا يوجد مستخدمون بعد</p>':''}
+    <p class="muted" style="margin-top:8px">«حذف» هنا يُعطّل الحساب منطقياً (Soft Delete) دائماً ولا يحذف الحساب نهائياً من نظام المصادقة — حذف حساب مصادقة نهائياً يتطلب صلاحيات خادم غير متاحة من المتصفح لأسباب أمنية.</p>
+  </div>`;
+}
+async function bindResearchers(){
+  if(session.role!=='admin') return;
+  const addBtn=$('#addResBtn');
+  if(addBtn) addBtn.onclick=async ()=>{
+    const username=$('#newUsername').value.trim().toLowerCase(),name=$('#newName').value.trim(),email=$('#newUser').value.trim(),pass=$('#newPass').value,role=$('#newRole').value;
+    const emailOk=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const userOk=/^[a-z0-9._-]{3,30}$/.test(username);
+    $('#f-nun').classList.toggle('invalid',!userOk);
+    $('#f-nu').classList.toggle('invalid',!name);
+    $('#f-ne').classList.toggle('invalid',!emailOk);
+    $('#f-np').classList.toggle('invalid',pass.length<6);
+    if(!userOk||!name||!emailOk||pass.length<6){toast('يرجى تصحيح الحقول',true);return}
+
+    addBtn.disabled=true;addBtn.textContent='جارٍ الإنشاء...';
+
+    // حفظ جلسة المدير الحالية قبل signUp لأن Supabase قد يستبدل جلسة المتصفح بالمستخدم الجديد.
+    const {data:{session:adminSession}}=await supabaseClient.auth.getSession();
+    if(!adminSession || !session || session.role!=='admin'){
+      toast('تعذّر التحقق من جلسة المدير الحالية',true);
+      addBtn.disabled=false;addBtn.innerHTML=icon('user-plus')+' إضافة المستخدم';
+      if(window.lucide)lucide.createIcons();
+      return;
+    }
+
+    try{
+      const {data,error}=await supabaseClient.auth.signUp({
+        email,
+        password:pass,
+        options:{data:{username,name,role:(role==='admin'?'admin':'researcher')}}
+      });
+
+      if(error) throw error;
+
+      // إعادة جلسة المدير فوراً؛ لا نخرج المدير من النظام بعد إنشاء الباحث.
+      await supabaseClient.auth.signOut();
+      const {error:restoreError}=await supabaseClient.auth.setSession({
+        access_token:adminSession.access_token,
+        refresh_token:adminSession.refresh_token
+      });
+      if(restoreError) throw restoreError;
+
+      const ok=await loadSessionProfile(adminSession.user);
+      if(!ok) throw new Error('تعذّر استعادة جلسة المدير بعد إنشاء المستخدم.');
+
+      await refreshAll();
+      editingUserId=null;
+      toast('تم إنشاء المستخدم بنجاح، وتم إبقاؤك داخل النظام كمدير.');
+      nav('researchers');
+    }catch(err){
+      console.error(err);
+      toast('تعذّر إنشاء الحساب: '+(err.message||'خطأ غير معروف'),true);
+    }finally{
+      addBtn.disabled=false;
+      addBtn.innerHTML=icon('user-plus')+' إضافة المستخدم';
+      if(window.lucide)lucide.createIcons();
+    }
+  };
+  const saveBtn=$('#saveUserBtn');
+  if(saveBtn) saveBtn.onclick=async ()=>{
+    const name=$('#editName').value.trim(),role=$('#editRole').value;
+    $('#f-eu').classList.toggle('invalid',!name);
+    if(!name){toast('يرجى تصحيح الحقول',true);return}
+    const editingUser=users().find(u=>u.id===editingUserId);
+    const isSelf=editingUser.id===session.id;
+    const newPass=isSelf? ($('#editPass')?$('#editPass').value:'') : '';
+    if(newPass && newPass.length<6){toast('كلمة المرور الجديدة قصيرة جداً (6 أحرف على الأقل)',true);return}
+    saveBtn.disabled=true;saveBtn.textContent='جارٍ الحفظ...';
+    try{
+      const {error}=await supabaseClient.from('profiles').update({name,role:(role==='admin'?'admin':'researcher')}).eq('id',editingUserId);
+      if(error) throw error;
+      if(isSelf && newPass){
+        const {error:pErr}=await supabaseClient.auth.updateUser({password:newPass});
+        if(pErr) throw pErr;
+      }
+      await refreshAll();
+      if(isSelf) session.name=name; // تحديث اسم الجلسة الحالية فوراً في الواجهة
+      toast('تم حفظ تعديلات المستخدم بنجاح');
+      editingUserId=null;nav('researchers');
+    }catch(err){
+      console.error(err);
+      toast('تعذّر حفظ التعديلات: '+(err.message||'خطأ غير معروف'),true);
+      saveBtn.disabled=false;saveBtn.innerHTML=icon('save',16)+' حفظ التعديلات';if(window.lucide)lucide.createIcons();
+    }
+  };
+  const resetBtn=$('#sendResetBtn');
+  if(resetBtn) resetBtn.onclick=async ()=>{
+    const editingUser=users().find(u=>u.id===editingUserId);
+    resetBtn.disabled=true;resetBtn.textContent='جارٍ الإرسال...';
+    const {error}=await supabaseClient.auth.resetPasswordForEmail(editingUser.email);
+    if(error) toast('تعذّر إرسال الرابط: '+error.message,true);
+    else toast('تم إرسال رابط إعادة تعيين كلمة المرور إلى '+editingUser.email);
+    resetBtn.disabled=false;resetBtn.innerHTML=icon('mail',14)+' إرسال رابط إعادة تعيين كلمة المرور بالبريد';if(window.lucide)lucide.createIcons();
+  };
+  const cancelBtn=$('#cancelEditUserBtn');
+  if(cancelBtn) cancelBtn.onclick=()=>{editingUserId=null;nav('researchers')};
+  $$('.editUserBtn').forEach(b=>b.onclick=()=>{editingUserId=b.dataset.id;nav('researchers')});
+  $$('.delUserBtn').forEach(b=>b.onclick=async ()=>{
+    const u=users().find(x=>x.id===b.dataset.id);
+    const hasRecords=houses().some(h=>h.researcher_id===u.id);
+    if(!confirm(`هل أنت متأكد من حذف المستخدم «${u.name}»؟ سيتم تعطيل حسابه منطقياً (لن يستطيع الدخول بعدها)${hasRecords?'، مع الحفاظ الكامل على سجلات الأسر المرتبطة به.':'.'}`))return;
+    const {error}=await supabaseClient.from('profiles').update({deleted:true,active:false}).eq('id',u.id);
+    if(error){toast('تعذّر الحذف: '+error.message,true);return}
+    await refreshAll();
+    toast('تم تعطيل حساب المستخدم منطقياً — سجلات الأسر المرتبطة به محفوظة كما هي');
+  });
+}
+
+// ===== الإعدادات =====
+function viewSettings(){
+  return `
+  <div class="card">
+    <h3 style="margin-top:0">معلومات الحساب</h3>
+    <p>${session.name} — ${session.role==='admin'?'مدير النظام':'باحث ميداني'}<br><span class="muted">${session.email||''}</span></p>
+    <button class="btn sec" id="logoutBtn">${icon('log-out')} تسجيل الخروج</button>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">حالة الاتصال بقاعدة البيانات</h3>
+    <p><span class="badge ${navigator.onLine?'b-ok':'b-warn'}">${navigator.onLine?'متصل':'غير متصل'}</span></p>
+    <p class="muted">هذا التطبيق متصل بقاعدة بيانات Supabase حقيقية، ويتطلب اتصالاً فعلياً بالإنترنت لإتمام أي عملية حفظ أو تعديل أو حذف.</p>
+  </div>
+  <div class="card">
+    <h3 style="margin-top:0">النسخ الاحتياطي واستعادة البيانات</h3>
+    <p class="muted">البيانات محفوظة مركزياً في Supabase (قاعدة PostgreSQL مُدارة). النسخ الاحتياطي والاستعادة تُدار من لوحة تحكم Supabase: Project Settings ← Database ← Backups. لا توجد في هذه الواجهة أداة لمسح قاعدة البيانات بالكامل عمداً — هذا إجراء خطير يجب أن يبقى بيد من يملك وصولاً مباشراً للوحة تحكم Supabase فقط.</p>
+  </div>`;
+}
+function bindSettings(){
+  $('#logoutBtn').onclick=logout;
+}
+
+boot();
+</script>
+</body>
+</html>
