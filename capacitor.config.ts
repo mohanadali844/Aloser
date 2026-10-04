@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.bigben.survey',
-  appName: 'نظام حصر الأسر',
+  appId: 'com.hayalasher.survey',
+  appName: 'حي العشر',
   webDir: 'www',
   bundledWebRuntime: false
 };
