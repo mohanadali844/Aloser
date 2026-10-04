@@ -1,8 +1,8 @@
 {
-  "name": "big-ben-survey-android",
+  "name": "hay-alasher-survey",
   "version": "1.0.0",
   "private": true,
-  "description": "نظام حصر الأسر - Android App",
+  "description": "نظام حصر الأسر - حي العشر",
   "scripts": {
     "build": "echo Static HTML app - no web build required",
     "android:add": "npx cap add android",
