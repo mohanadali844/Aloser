@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1214">
+<link rel="manifest" href="manifest.json">
+<script>
+(function(){var t='dark';try{t=localStorage.getItem('theme')||'dark'}catch(e){}document.documentElement.setAttribute('data-theme',t==='light'?'light':'dark')})();
+</script>
 <title>نظام حصر الأسر</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,145 +17,123 @@
 <script src="https://cdn.jsdelivr.net/npm/lucide@0.294.0/dist/umd/lucide.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#f4f6f7;--card:#ffffff;--pri:#0d9488;--pri-d:#0f766e;--txt:#1f2937;--sub:#6b7280;--bd:#e2e8f0;--danger:#b91c1c;--warn:#b7791f;--ok:#1e7e45}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#0f172a;--card:#1e293b;--pri:#2dd4bf;--pri-d:#14b8a6;--txt:#f1f5f9;--sub:#94a3b8;--bd:#334155}}
-:root[data-theme="dark"]{--bg:#0f172a;--card:#1e293b;--pri:#2dd4bf;--pri-d:#14b8a6;--txt:#f1f5f9;--sub:#94a3b8;--bd:#334155}
+/* ============================================================
+   نظام ألوان موحَّد واحد (بلا تعارضات) — كل عنصر فيه نص له زوج
+   خلفية/لون محدد صراحة أو عبر هذه المتغيرات، فلا يختفي نص أبداً.
+   تم إلغاء التحويل التلقائي للوضع الداكن لأنه كان يسبب تعارض
+   الألوان (خلفية فاتحة ثابتة + نص يتحول فاتحاً في الوضع الداكن).
+   ============================================================ */
+:root{color-scheme:dark;--bg:#0f1214;--card:#171b1e;--field:#1d2327;--pri:#0f7a5d;--pri-d:#0b5f49;--pri-l:#4fd1a8;--txt:#e8ebea;--sub:#9aa5a1;--bd:#2a3236;--danger:#d92d20;--warn:#f5b942;--ok:#3ddc97;
+  --hdr:#0e2a24;--navact-bg:#e8ebea;--navact-txt:#0f1214;--fambox:#12161a;--th-bg:#1d2327;--ok-bg:#123a2c;--ok-tx:#7df0bd;--warn-bg:#3d3000;--warn-tx:#ffd978;--overlay:rgba(0,0,0,.72);--shadow:rgba(0,0,0,.5);--ph:#6f7b77}
+:root[data-theme="light"]{color-scheme:light;--bg:#f3f6f5;--card:#ffffff;--field:#ffffff;--pri:#0b6b53;--pri-d:#084c3d;--pri-l:#0b6b53;--txt:#17212b;--sub:#53616d;--bd:#d7dee3;--danger:#b42318;--warn:#9a6700;--ok:#147a4b;
+  --hdr:#0b6b53;--navact-bg:#ffffff;--navact-txt:#084c3d;--fambox:#fbfdfc;--th-bg:#eef3f1;--ok-bg:#e5f5ec;--ok-tx:#12643f;--warn-bg:#fff4d6;--warn-tx:#7a5200;--overlay:rgba(15,23,30,.55);--shadow:rgba(23,33,43,.10);--ph:#8a97a0}
 *{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
 body{margin:0;font-family:'Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--txt);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);min-height:100%}
-header{position:sticky;top:8px;margin-top:8px;padding-top:env(safe-area-inset-top,0px);background:var(--pri);color:#fff;z-index:20;box-shadow:0 2px 6px rgba(0,0,0,.15);border-radius:0 0 14px 14px}
+header{position:sticky;top:8px;margin-top:8px;padding-top:env(safe-area-inset-top,0px);background:var(--hdr);color:#fff;z-index:20;box-shadow:0 3px 12px var(--shadow);border:1px solid var(--bd);border-top:none;border-radius:0 0 14px 14px}
 .hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;max-width:960px;margin:0 auto;position:relative;min-height:58px}
-.hd h1{font-size:16px;margin:0;font-weight:700}
-.pill{font-size:11px;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.18)}
-.top-clock{position:absolute;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;white-space:nowrap;text-align:center;line-height:1.25;pointer-events:none}
+.hd h1{font-size:16px;margin:0;font-weight:700;display:flex;align-items:center;gap:8px;color:#fff}
+.pill{font-size:11px;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.18);color:#fff}
+.top-clock{position:absolute;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;white-space:nowrap;text-align:center;line-height:1.25;pointer-events:none;color:#fff}
 .top-clock .time{font-size:15px;font-weight:800;letter-spacing:.2px}
 .top-clock .date{font-size:10px;opacity:.92;margin-top:2px}
 @media(max-width:560px){.top-clock .time{font-size:13px}.top-clock .date{font-size:9px}.hd{padding-left:10px;padding-right:10px}.hd h1{font-size:14px}.pill{font-size:9px}}
 nav{display:flex;gap:4px;overflow-x:auto;padding:0 8px 8px;max-width:960px;margin:0 auto}
-nav button{flex:0 0 auto;background:rgba(255,255,255,.12);border:none;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;white-space:nowrap}
-nav button.active{background:#fff;color:var(--pri-d);font-weight:700}
-nav button{display:inline-flex;align-items:center;gap:6px}
+nav button{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:none;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;cursor:pointer;white-space:nowrap}
+nav button.active{background:var(--navact-bg);color:var(--navact-txt);font-weight:700}
 .ic{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
-.btn{display:inline-flex;align-items:center;gap:6px;justify-content:center}
-.hd h1{display:flex;align-items:center;gap:8px}
 main{max-width:960px;margin:0 auto;padding:16px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
+.card{background:var(--card);color:var(--txt);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 3px 12px var(--shadow)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
-.stat{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;text-align:center}
-.stat b{display:block;font-size:24px;color:var(--pri-d)}
+.stat{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;text-align:center;box-shadow:0 3px 12px var(--shadow)}
+.stat b{display:block;font-size:24px;color:var(--pri-l)}
 .stat span{font-size:12px;color:var(--sub)}
-label{display:block;font-size:13px;margin:10px 0 4px;font-weight:600}
-input,select,textarea{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;font-size:14px;background:var(--bg);color:var(--txt);font-family:inherit}
-input:focus,select:focus,textarea:focus{outline:2px solid var(--pri);border-color:var(--pri)}
+label{display:block;font-size:13px;margin:10px 0 4px;font-weight:700;color:var(--txt)}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;font-size:14px;background:var(--field);color:var(--txt);font-family:inherit}
+input::placeholder,textarea::placeholder{color:var(--ph);opacity:1}
+option{background:var(--field);color:var(--txt)}
+input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(--pri-l) 35%,transparent);border-color:var(--pri-l)}
 .err{color:var(--danger);font-size:12px;margin-top:3px;display:none}
 .field.invalid input,.field.invalid select,.field.invalid textarea{border-color:var(--danger)}
 .field.invalid .err{display:block}
-.btn{background:var(--pri);color:#fff;border:none;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer}
+.btn{display:inline-flex;align-items:center;gap:6px;justify-content:center;background:linear-gradient(135deg,var(--pri),var(--pri-d));color:#fff;border:none;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(8,76,61,.16)}
 .btn:disabled{opacity:.5;cursor:not-allowed}
-.btn.sec{background:transparent;color:var(--pri-d);border:1px solid var(--pri)}
-.btn.danger{background:var(--danger)}
+.btn.sec{background:transparent;color:var(--pri-l);border:1px solid var(--pri-l);box-shadow:none}
+.btn.danger{background:var(--danger);color:#fff}
 .btn.sm{padding:6px 10px;font-size:12px}
-.fam-box{border:1.5px dashed var(--pri);border-radius:10px;padding:12px;margin:12px 0;position:relative}
-.fam-box h4{margin:0 0 6px;font-size:14px;color:var(--pri-d)}
+.fam-box{border:1.5px dashed var(--pri);border-radius:10px;padding:12px;margin:12px 0;position:relative;background:var(--fambox)}
+.fam-box h4{margin:0 0 6px;font-size:14px;color:var(--pri-l)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:8px;text-align:right;border-bottom:1px solid var(--bd)}
-th{background:var(--bg);font-size:12px;color:var(--sub)}
+th{background:var(--th-bg);font-size:12px;color:var(--txt)}
+td{color:var(--txt)}
 .tblwrap{overflow-x:auto}
 .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:12px}
-.b-ok{background:#dcfce7;color:var(--ok)}
-.b-warn{background:#fef3c7;color:var(--warn)}
-.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:16px;left:16px;max-width:400px;margin:0 auto;background:var(--pri-d);color:#fff;padding:12px 16px;border-radius:10px;font-size:14px;z-index:50;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.b-ok{background:var(--ok-bg);color:var(--ok-tx)}
+.b-warn{background:var(--warn-bg);color:var(--warn-tx)}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:16px;left:16px;max-width:400px;margin:0 auto;background:var(--pri-d);color:#fff;padding:12px 16px;border-radius:10px;font-size:14px;z-index:50;box-shadow:0 4px 12px var(--shadow)}
 .toast.err{background:var(--danger)}
 .hide{display:none!important}
 .muted{color:var(--sub);font-size:12px}
 .login-wrap{min-height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));display:flex;align-items:center;justify-content:center;padding:20px}
-.login-card{max-width:380px;width:100%}
+.login-card{max-width:380px;width:100%;box-shadow:0 8px 28px var(--shadow)}
 .pw-wrap{position:relative}
 .pw-wrap button{position:absolute;left:8px;top:8px;background:none;border:none;color:var(--sub);cursor:pointer;font-size:12px}
-.chip{display:inline-block;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;margin:2px;font-size:12px;cursor:pointer}
+.chip{display:inline-block;padding:8px 10px;border:1px solid var(--bd);border-radius:8px;margin:2px;font-size:12px;cursor:pointer;color:var(--txt);background:var(--field)}
 .chip.on{background:var(--pri);color:#fff;border-color:var(--pri)}
 footer.note{font-size:11px;color:var(--sub);text-align:center;padding:16px}
 .empty{text-align:center;color:var(--sub);padding:30px 10px}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:60;display:flex;align-items:center;justify-content:center;padding:14px;padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
-.modal-box{background:var(--card);border:1px solid var(--bd);border-radius:14px;max-width:540px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden}
+.modal-overlay{position:fixed;inset:0;background:var(--overlay);z-index:60;display:flex;align-items:center;justify-content:center;padding:14px;padding-top:calc(14px + env(safe-area-inset-top,0px));padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.modal-box{background:var(--card);color:var(--txt);border:1px solid var(--bd);border-radius:14px;max-width:540px;width:100%;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 18px 50px var(--shadow)}
 .modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--bd);flex:0 0 auto}
-.modal-head h3{margin:0;font-size:16px}
-.modal-close{background:none;border:none;color:var(--sub);cursor:pointer;padding:4px}
-.modal-body{padding:12px 16px;overflow-y:auto;flex:1 1 auto}
-.modal-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px}
+.modal-head h3{margin:0;font-size:16px;color:var(--pri-l);font-weight:800}
+.modal-close{background:none;border:none;color:var(--pri-l);cursor:pointer;padding:4px}
+.modal-body{padding:12px 16px;overflow-y:auto;flex:1 1 auto;background:var(--card)}
+.modal-row{display:grid;grid-template-columns:38% 1fr;gap:12px;align-items:start;padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px}
 .modal-row:last-child{border-bottom:none}
-.mrow-label{color:var(--sub);flex:0 0 auto}
-.mrow-val{font-weight:600;text-align:left;word-break:break-word}
-.modal-foot{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--bd);flex:0 0 auto;flex-wrap:wrap}
-.modal-foot .btn{flex:1 1 auto}
+.mrow-label{color:var(--sub);font-weight:700;text-align:right}
+.mrow-val{color:var(--txt);font-weight:700;text-align:right;word-break:break-word}
+.modal-foot{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--bd);flex:0 0 auto;flex-wrap:wrap;background:var(--card)}
+.modal-foot .btn{flex:1 1 auto;font-weight:800}
 .fam-row{cursor:pointer}
+.fam-row:hover td,.fam-row:active td{background:var(--th-bg)}
 .pdfbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+/* ألوان ملفات PDF مستقلة تماماً عن ألوان الواجهة أعلاه (الصفحة تُلتقط كصورة ثابتة دائماً بيضاء) */
 #pdfExportRoot{position:fixed;left:-99999px;top:0;direction:rtl;font-family:'Cairo',Tahoma,Arial,sans-serif}
-.pdfPage{background:#fff;color:#17212b;padding:12px 14px;box-sizing:border-box}
-.pdfPage h2{margin:0 0 4px;font-size:22px;line-height:1.25}
-.pdfPage .pmeta{font-size:10.5px;color:#52635e;margin-bottom:8px;line-height:1.45}
+.pdfPage{background:#ffffff;color:#17212b;padding:12px 14px;box-sizing:border-box}
+.pdfPage h2{margin:0 0 4px;font-size:22px;line-height:1.25;color:#075e49;font-weight:800}
+.pdfPage .pmeta{font-size:10.5px;color:#4d625b;margin-bottom:8px;line-height:1.45}
 .pdfPage table{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed}
 .pdfPage th,.pdfPage td{border:1px solid #b8d2ca;padding:6px 8px;text-align:right;white-space:nowrap;overflow:visible}
 .pdfPage th.wrap,.pdfPage td.wrap{white-space:normal;word-break:break-word}
-.pdfPage th{background:#0b6b53;color:#fff;font-weight:800}
-.pdfPage tr:nth-child(even) td{background:#f6faf8}
-.pdfPage .pfoot{font-size:10px;color:#666;margin-top:8px;text-align:center}
+.pdfPage th{background:#075e49;color:#ffffff;font-weight:800}
+.pdfPage td{background:#ffffff;color:#17212b}
+.pdfPage tr:nth-child(even) td{background:#f5faf8}
+.pdfPage .pfoot{font-size:10px;color:#60716c;margin-top:8px;text-align:center}
 .pdfPage table.field-table{font-size:12.5px}
 .pdfPage table.field-table td,.pdfPage table.field-table th{padding:7px 9px;line-height:1.35}
-.pdfPage table.field-table .flabel{background:#e3f1ed;font-weight:800;text-align:right}
-.pdfPage table.field-table .fval{text-align:left;font-weight:600}
+.pdfPage table.field-table .flabel{background:#e1f0eb;color:#075e49;font-weight:800;text-align:right}
+.pdfPage table.field-table .fval{background:#ffffff;color:#17212b;font-weight:600;text-align:right}
 
-/* ===== الوان فخمة وتحسين وضوح الكتابة ===== */
-:root{--bg:#f5f7f8;--card:#ffffff;--pri:#0b6b53;--pri-d:#084c3d;--txt:#17212b;--sub:#53616d;--bd:#d7dee3;--danger:#b42318;--warn:#9a6700;--ok:#147a4b}
-body{color:#17212b;background:#f5f7f8}
-header{background:linear-gradient(135deg,#084c3d,#0b6b53);box-shadow:0 3px 12px rgba(8,76,61,.22)}
-nav button{background:rgba(255,255,255,.12);color:#fff}
-nav button.active{background:#fff;color:#084c3d}
-.card,.stat{background:#fff;border-color:#d7dee3;box-shadow:0 3px 12px rgba(23,33,43,.055)}
-.stat b{color:#084c3d}
-.stat span,.muted{color:#53616d}
-label{color:#17212b;font-weight:700}
-input,select,textarea{background:#fff;color:#17212b;border-color:#cbd5dc}
-input::placeholder,textarea::placeholder{color:#7a8791;opacity:1}
-input:focus,select:focus,textarea:focus{outline:2px solid rgba(11,107,83,.22);border-color:#0b6b53}
-.btn{background:linear-gradient(135deg,#0b6b53,#084c3d);color:#fff;box-shadow:0 2px 6px rgba(8,76,61,.16)}
-.btn.sec{background:#fff;color:#084c3d;border-color:#0b6b53;box-shadow:none}
-.fam-box{border-color:#0b6b53;background:#fbfdfc}
-.fam-box h4{color:#084c3d}
-th{background:#eef3f1;color:#30413b}
-td{color:#17212b}
-.badge.b-ok{background:#e5f5ec;color:#12643f}
-.badge.b-warn{background:#fff4d6;color:#7a5200}
-.toast{background:#084c3d}
-.login-card{background:#fff;border-color:#d7dee3;box-shadow:0 8px 28px rgba(23,33,43,.10)}
-
-/* ===== تصحيح ألوان تفاصيل الأسرة وملفات PDF ===== */
-.modal-overlay{background:rgba(15,23,30,.62)}
-.modal-box{background:#ffffff !important;color:#17212b !important;border:1px solid #cfd8d5;box-shadow:0 18px 50px rgba(8,76,61,.25)}
-.modal-head{background:#ffffff;color:#084c3d;border-bottom:1px solid #d7e1de}
-.modal-head h3{color:#084c3d;font-weight:800}
-.modal-close{color:#0b6b53 !important}
-.modal-body{background:#ffffff}
-.modal-row{border-bottom:1px solid #dfe7e4;color:#17212b}
-.mrow-label{color:#52635e !important;font-weight:700}
-.mrow-val{color:#17212b !important;font-weight:700}
-.modal-foot{background:#ffffff;border-top:1px solid #d7e1de}
-.modal-foot .btn{font-weight:800}
-.modal-foot .btn.sec{background:#ffffff;color:#084c3d;border-color:#0b6b53}
-.modal-foot .btn.danger{background:#b42318;color:#ffffff}
-.modal-foot .btn:not(.sec):not(.danger){background:linear-gradient(135deg,#0b6b53,#084c3d);color:#ffffff}
-/* ألوان PDF ثابتة ومستقلة عن ألوان المتصفح أو الوضع الداكن */
-.pdfPage{background:#ffffff !important;color:#17212b !important;padding:12px 14px !important}
-.pdfPage h2{color:#075e49 !important;font-weight:800}
-.pdfPage .pmeta{color:#4d625b !important}
-.pdfPage th{background:#075e49 !important;color:#ffffff !important;border-color:#075e49 !important}
-.pdfPage td{background:#ffffff;color:#17212b;border-color:#bfd4ce}
-.pdfPage tr:nth-child(even) td{background:#f5faf8 !important}
-.pdfPage table.field-table .flabel{background:#e1f0eb !important;color:#075e49 !important;font-weight:800}
-.pdfPage table.field-table .fval{background:#ffffff !important;color:#17212b !important;font-weight:600}
-.pdfPage .pfoot{color:#60716c !important}
-
+/* ===== زر تبديل الوضع الداكن/الفاتح ===== */
+.hd-end{display:flex;align-items:center;gap:8px}
+.themeBtn{width:34px;height:34px;padding:0;border-radius:50%;border:none;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.16);color:#fff;flex:0 0 auto}
+.themeBtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.themeBtn.alone{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));left:12px;z-index:30;background:var(--card);color:var(--txt);border:1px solid var(--bd)}
+/* ===== الطباعة: ورقة بيضاء وكتابة سوداء ===== */
+@media print{
+  :root,:root[data-theme]{color-scheme:light;--bg:#fff;--card:#fff;--field:#fff;--txt:#000;--sub:#222;--bd:#999;--pri:#000;--pri-d:#000;--pri-l:#000;--ok:#000;--danger:#000;--warn:#000}
+  html,body{background:#fff!important;color:#000!important}
+  *{background:transparent!important;color:#000!important;box-shadow:none!important;text-shadow:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  header,nav,.themeBtn,.toast,.pdfbar,.btn,button,.modal-overlay,footer.note{display:none!important}
+  main{max-width:100%;padding:0}
+  .card,.stat,.fam-box{background:#fff!important;border:1px solid #999!important;break-inside:avoid}
+  input,select,textarea{background:#fff!important;border:1px solid #999!important;color:#000!important}
+  th{background:#eee!important;color:#000!important;border-bottom:1px solid #000!important}
+  td,th{border-bottom:1px solid #999!important}
+  .badge{border:1px solid #000;background:#fff!important}
+}
 </style>
 </head>
 <body>
@@ -205,13 +188,25 @@ async function deleteFamily(hId,fId,afterRoute){
   toast('تم حذف بيانات الأسرة بنجاح');
   nav(afterRoute);
 }
+// قاعدة البيانات تُرجع null للحقول الاختيارية (نوع الإعاقة، نوع المرض، الملاحظات...)، فنحوّلها لقيم آمنة لتفادي الأخطاء
+function normalizeFamily(f){
+  const str=v=>(v===null||v===undefined)?'':String(v);
+  ['head_name','phone','divorced','widow','chronic_disease','chronic_disease_type','treatment','treatment_type','disability','notes'].forEach(k=>f[k]=str(f[k]));
+  ['sons','males','females','under5'].forEach(k=>f[k]=(f[k]===null||f[k]===undefined)?'':f[k]);
+  if(typeof f.disability_type==='string'){
+    try{const p=JSON.parse(f.disability_type);f.disability_type=Array.isArray(p)?p:[f.disability_type]}catch(e){f.disability_type=f.disability_type?[f.disability_type]:[]}
+  }
+  if(!Array.isArray(f.disability_type)) f.disability_type=[];
+  return f;
+}
+function escAttr(v){return String(v===null||v===undefined?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function startEditFamily(hId,fId,returnRoute){
   const h=houses().find(x=>x.id===hId);
   if(!canEditFamily(h)){toast('ليست لديك صلاحية تعديل هذا السجل',true);return}
   const f=h.families.find(x=>x.id===fId);
   editTargetHouseId=hId;editTargetFamilyId=fId;
   editHouseFields={house_number:h.house_number,block_number:h.block_number};
-  editFamilyDraft=JSON.parse(JSON.stringify(f));
+  editFamilyDraft=normalizeFamily(JSON.parse(JSON.stringify(f)));
   detailReturnRoute=returnRoute;
   nav('editFamily');
 }
@@ -231,6 +226,18 @@ function validateHouse(h){
   if(!reqNum(h.house_number)) e.house_number='رقم المنزل مطلوب';
   return e;
 }
+function normAr(v){return String(v==null?'':v).replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim().toLowerCase()}
+const SENSITIVE_STR=['phone','divorced','widow','chronic_disease','chronic_disease_type','treatment','treatment_type','disability','notes'];
+// الباحث يرى لأسر غيره الاسم ورقم المنزل فقط؛ الهاتف والبيانات الصحية والاجتماعية تُخفى (المدير وصاحب السجل يرون كل شيء)
+function maskFamily(f){const m={...f};SENSITIVE_STR.forEach(k=>m[k]='—');m.disability_type=['—'];return m}
+function findDuplicate(f){
+  const nm=normAr(f.head_name),ph=String(f.phone||'').replace(/\D/g,'');
+  if(!nm||!ph) return null;
+  for(const h of houses()) for(const x of h.families){
+    if(x.id!==f.id && normAr(x.head_name)===nm && String(x.phone||'').replace(/\D/g,'')===ph) return h;
+  }
+  return null;
+}
 function validateFamily(f){
   const e={};
   if(!reqStr(f.head_name)) e.head_name='اسم رب الأسرة مطلوب';
@@ -249,6 +256,10 @@ function validateFamily(f){
   }
   if(!f.disability) e.disability='مطلوب';
   if(f.disability==='نعم' && (!f.disability_type || f.disability_type.length===0)) e.disability_type='اختر نوع إعاقة واحداً على الأقل';
+  const n=v=>Number(v);
+  if(!e.sons&&!e.males&&!e.females && n(f.males)+n(f.females)!==n(f.sons)) e.males='مجموع الذكور والإناث ('+(n(f.males)+n(f.females))+') لا يساوي عدد أفراد الأسرة ('+n(f.sons)+')';
+  if(!e.sons&&!e.under5 && n(f.under5)>n(f.sons)) e.under5='عدد الأطفال دون 5 سنوات أكبر من عدد أفراد الأسرة';
+  if(!e.phone&&!e.head_name){const d=findDuplicate(f); if(d) e.phone='أسرة مسجلة مسبقاً بنفس الاسم والهاتف (منزل رقم '+d.house_number+')';}
   return e;
 }
 
@@ -307,6 +318,7 @@ function render(){
   app.innerHTML=layout();
   bindNav();
   const body=$('#body');
+  try{
   if(route==='dashboard') body.innerHTML=viewDashboard();
   else if(route==='add') {body.innerHTML=viewAdd();bindAdd();}
   else if(route==='search'){body.innerHTML=viewSearch();bindSearch();}
@@ -315,11 +327,40 @@ function render(){
   else if(route==='editFamily'){body.innerHTML=viewEditFamily();bindEditFamily();}
   else if(route==='researchers'){body.innerHTML=viewResearchers();bindResearchers();}
   else if(route==='settings'){body.innerHTML=viewSettings();bindSettings();}
+  }catch(err){
+    console.error('render error:',err);
+    body.innerHTML='<div class="card"><p class="empty">حدث خطأ أثناء عرض هذه الشاشة: '+escAttr(err.message)+'</p></div>';
+  }
   if(window.lucide) lucide.createIcons();
   startTopClock();
 }
 
 
+// ===== الوضع الداكن / الفاتح =====
+function curTheme(){return document.documentElement.getAttribute('data-theme')==='light'?'light':'dark'}
+function themeIconSvg(){
+  // في الوضع الداكن تظهر الشمس (للتحويل للفاتح)، وفي الفاتح يظهر القمر (للتحويل للداكن)
+  return curTheme()==='dark'
+    ? '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>'
+    : '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+}
+function themeBtn(extra){
+  const dark=curTheme()==='dark';
+  return `<button type="button" class="themeBtn ${extra||''}" title="${dark?'الوضع الفاتح':'الوضع الداكن'}" aria-label="${dark?'التبديل إلى الوضع الفاتح':'التبديل إلى الوضع الداكن'}">${themeIconSvg()}</button>`;
+}
+function toggleTheme(){
+  const t=curTheme()==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  try{localStorage.setItem('theme',t)}catch(e){}
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute('content',t==='dark'?'#0f1214':'#0b6b53');
+  const dark=t==='dark';
+  document.querySelectorAll('.themeBtn').forEach(b=>{
+    b.innerHTML=themeIconSvg();
+    b.title=dark?'الوضع الفاتح':'الوضع الداكن';
+    b.setAttribute('aria-label',dark?'التبديل إلى الوضع الفاتح':'التبديل إلى الوضع الداكن');
+  });
+}
+document.addEventListener('click',e=>{ if(e.target.closest && e.target.closest('.themeBtn')) toggleTheme(); });
 function icon(name,size){return `<span class="ic" data-lucide="${name}" style="width:${size||16}px;height:${size||16}px"></span>`}
 function layout(){
   const tabs=[['dashboard','الرئيسية','home'],['add','إضافة منزل','house-plus'],['search','السجلات','clipboard-list'],['neighborhood','جميع أسر الحي','users']];
@@ -330,7 +371,7 @@ function layout(){
     <div class="hd">
       <h1>${icon('clipboard-list',20)} نظام حصر الأسر</h1>
       <div class="top-clock" id="topClock" aria-live="polite"><div class="time">--:--:--</div><div class="date">جاري تحميل التاريخ...</div></div>
-      <span class="pill">${session.name} • ${session.role==='admin'?'مدير':'باحث'}</span>
+      <div class="hd-end">${themeBtn()}<span class="pill">${session.name} • ${session.role==='admin'?'مدير':'باحث'}</span></div>
     </div>
     <nav>${tabs.map(([r,l,ic])=>`<button data-r="${r}" class="${route===r?'active':''}">${icon(ic)}${l}</button>`).join('')}</nav>
   </header>
@@ -341,9 +382,8 @@ function bindNav(){$$('nav button').forEach(b=>b.onclick=()=>nav(b.dataset.r))}
 
 // ===== تسجيل الدخول (مصادقة حقيقية عبر Supabase Auth) =====
 function viewLogin(){
-  return `<div class="login-wrap"><div class="card login-card">
+  return `${themeBtn('alone')}<div class="login-wrap"><div class="card login-card">
     <h2 style="margin-top:0;text-align:center">تسجيل الدخول</h2>
-    <p class="muted" style="text-align:center">متصل بقاعدة بيانات حقيقية — استخدم اسم المستخدم الخاص بك</p>
     <div class="field" id="f-u"><label>اسم المستخدم</label><input id="username" type="text" autocomplete="username"><div class="err">مطلوب</div></div>
     <div class="field" id="f-p"><label>كلمة المرور</label>
       <div class="pw-wrap"><input id="password" type="password" autocomplete="current-password"><button type="button" id="togglePw">إظهار</button></div>
@@ -387,6 +427,9 @@ function viewDashboard(){
   const myHouses = session.role==='admin'? H : H.filter(h=>h.researcher_id===session.id);
   const totalFamilies=H.reduce((s,h)=>s+h.families.length,0);
   const myFamilies=myHouses.reduce((s,h)=>s+h.families.length,0);
+  const all=H.flatMap(h=>h.families), N=v=>Number(v)||0, sum=k=>all.reduce((t,f)=>t+N(f[k]),0);
+  const cnt=fn=>all.filter(fn).length;
+  const byRes={}; H.forEach(h=>{byRes[h.researcher_name]=(byRes[h.researcher_name]||0)+h.families.length});
   const lastRecords=[...H].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5);
   return `
   <div class="grid" style="margin-bottom:16px">
@@ -396,6 +439,15 @@ function viewDashboard(){
     <div class="stat"><b style="color:var(--ok)">${navigator.onLine?icon('wifi',20):icon('wifi-off',20)}</b><span>${navigator.onLine?'متصل بقاعدة البيانات':'غير متصل بالإنترنت'}</span></div>
   </div>
   
+  <div class="grid" style="margin-bottom:16px">
+    <div class="stat"><b>${sum('sons')}</b><span>إجمالي أفراد الأسر</span></div>
+    <div class="stat"><b>${sum('males')} / ${sum('females')}</b><span>ذكور / إناث</span></div>
+    <div class="stat"><b>${sum('under5')}</b><span>أطفال دون 5 سنوات</span></div>
+    <div class="stat"><b>${cnt(f=>f.chronic_disease==='نعم')}</b><span>أسر بها مرض مزمن</span></div>
+    <div class="stat"><b>${cnt(f=>f.disability==='نعم')}</b><span>أسر بها إعاقة</span></div>
+    <div class="stat"><b>${cnt(f=>f.widow==='نعم')} / ${cnt(f=>f.divorced==='نعم')}</b><span>أرامل / مطلقات</span></div>
+  </div>
+  ${session.role==='admin'&&Object.keys(byRes).length?`<div class="card" style="margin-bottom:16px"><b>أسر كل باحث</b><div class="tblwrap"><table><tr><th>الباحث</th><th>عدد الأسر</th></tr>${Object.entries(byRes).sort((a,b)=>b[1]-a[1]).map(([n,c])=>`<tr><td>${n}</td><td>${c}</td></tr>`).join('')}</table></div></div>`:''}
   <div class="card">
     <b>آخر السجلات المضافة</b>
     ${lastRecords.length? '<div class="tblwrap"><table><tr><th>رقم المنزل</th><th>عدد الأسر</th><th>الباحث</th><th>التاريخ</th></tr>'+
@@ -417,8 +469,7 @@ function viewAdd(){
     </div>
     <label>اسم الباحث/الباحثة</label>
     <input value="${session.name}" disabled>
-    <p class="muted">يُملأ تلقائياً من حساب الباحث المسجّل دخوله</p>
-    <p class="muted">عدد الأسر في المنزل يُحسب تلقائياً = عدد أقسام الأسر أدناه (<b id="famCountShow">${famDraft.length}</b>)</p>
+    <p class="muted" style="display:none">عدد الأسر في المنزل يُحسب تلقائياً = عدد أقسام الأسر أدناه (<b id="famCountShow">${famDraft.length}</b>)</p>
   </div>
   <div id="famList"></div>
   <button class="btn sec" id="addFamBtn">${icon('plus')} إضافة أسرة أخرى في نفس المنزل</button>
@@ -427,22 +478,23 @@ function viewAdd(){
   </div>`;
 }
 function familyForm(f,idx,total,opts={}){
+  f=normalizeFamily(f);
   const showFamNum = total>1;
   const removeBtn = (total>1 && !opts.hideRemove) ? `<button type="button" class="btn danger sm removeFam" style="float:left">حذف</button>` : '';
   return `<div class="fam-box" data-id="${f.id}">
     <h4>بيانات الأسرة ${showFamNum? '#'+(idx+1) : ''} ${removeBtn}</h4>
-    ${showFamNum?`<p class="muted">رقم الأسرة (تلقائي): <b>${idx+1}</b></p>`:''}
+    
     <div class="row2">
-      <div class="field" data-f="head_name"><label>اسم رب الأسرة *</label><input data-k="head_name" value="${f.head_name}"><div class="err"></div></div>
-      <div class="field" data-f="phone"><label>رقم الهاتف *</label><input data-k="phone" value="${f.phone}"><div class="err"></div></div>
+      <div class="field" data-f="head_name"><label>اسم رب الأسرة *</label><input data-k="head_name" value="${escAttr(f.head_name)}"><div class="err"></div></div>
+      <div class="field" data-f="phone"><label>رقم الهاتف *</label><input data-k="phone" value="${escAttr(f.phone)}"><div class="err"></div></div>
     </div>
     <div class="row2">
-      <div class="field" data-f="sons"><label>عدد أفراد الأسرة *</label><input data-k="sons" type="number" min="0" value="${f.sons}"><div class="err"></div></div>
-      <div class="field" data-f="males"><label>عدد الذكور *</label><input data-k="males" type="number" min="0" value="${f.males}"><div class="err"></div></div>
+      <div class="field" data-f="sons"><label>عدد أفراد الأسرة *</label><input data-k="sons" type="number" min="0" value="${escAttr(f.sons)}"><div class="err"></div></div>
+      <div class="field" data-f="males"><label>عدد الذكور *</label><input data-k="males" type="number" min="0" value="${escAttr(f.males)}"><div class="err"></div></div>
     </div>
     <div class="row2">
-      <div class="field" data-f="females"><label>عدد الإناث *</label><input data-k="females" type="number" min="0" value="${f.females}"><div class="err"></div></div>
-      <div class="field" data-f="under5"><label>عدد الأطفال دون سن الخامسة *</label><input data-k="under5" type="number" min="0" value="${f.under5}"><div class="err"></div></div>
+      <div class="field" data-f="females"><label>عدد الإناث *</label><input data-k="females" type="number" min="0" value="${escAttr(f.females)}"><div class="err"></div></div>
+      <div class="field" data-f="under5"><label>عدد الأطفال دون سن الخامسة *</label><input data-k="under5" type="number" min="0" value="${escAttr(f.under5)}"><div class="err"></div></div>
     </div>
     <div class="row2">
       <div class="field" data-f="divorced"><label>هل توجد مطلقة ضمن أفراد الأسرة؟ *</label>
@@ -453,11 +505,11 @@ function familyForm(f,idx,total,opts={}){
     <div class="field" data-f="chronic_disease"><label>هل يوجد فرد مصاب بمرض مزمن؟ *</label>
       <select data-k="chronic_disease"><option value="">اختر</option><option ${f.chronic_disease==='نعم'?'selected':''}>نعم</option><option ${f.chronic_disease==='لا'?'selected':''}>لا</option></select><div class="err"></div></div>
     <div class="chronicBox" style="display:${f.chronic_disease==='نعم'?'block':'none'}">
-      <div class="field" data-f="chronic_disease_type"><label>ما نوع المرض المزمن؟ *</label><input data-k="chronic_disease_type" value="${f.chronic_disease_type}"><div class="err"></div></div>
+      <div class="field" data-f="chronic_disease_type"><label>ما نوع المرض المزمن؟ *</label><input data-k="chronic_disease_type" value="${escAttr(f.chronic_disease_type)}"><div class="err"></div></div>
       <div class="field" data-f="treatment"><label>هل يتلقى علاجاً؟ *</label>
         <select data-k="treatment"><option value="">اختر</option><option ${f.treatment==='نعم'?'selected':''}>نعم</option><option ${f.treatment==='لا'?'selected':''}>لا</option></select><div class="err"></div></div>
       <div class="treatBox" style="display:${f.treatment==='نعم'?'block':'none'}">
-        <label>ما نوع العلاج الذي يتلقاه؟</label><input data-k="treatment_type" value="${f.treatment_type}">
+        <label>ما نوع العلاج الذي يتلقاه؟</label><input data-k="treatment_type" value="${escAttr(f.treatment_type)}">
       </div>
     </div>
     <div class="field" data-f="disability"><label>هل يوجد فرد لديه إعاقة؟ *</label>
@@ -468,7 +520,7 @@ function familyForm(f,idx,total,opts={}){
       <div class="err"></div>
     </div>
     <label>ملاحظات الباحث/الباحثة</label>
-    <textarea data-k="notes" rows="2">${f.notes}</textarea>
+    <textarea data-k="notes" rows="2">${escAttr(f.notes)}</textarea>
   </div>`;
 }
 function renderFamList(){
@@ -563,6 +615,10 @@ function viewSearch(){
       <input id="q" placeholder="ابحث برقم المنزل / رقم الأسرة / اسم رب الأسرة / الهاتف">
       <select id="sortBy"><option value="date">ترتيب حسب التاريخ (الأحدث)</option><option value="house">ترتيب حسب رقم المنزل</option></select>
     </div>
+    <div class="row2" style="margin-top:10px">
+      <input id="blk" type="number" min="0" placeholder="رقم المربع">
+      <select id="fltSel"><option value="">كل الأسر</option><option value="chronic">لديهم مرض مزمن</option><option value="dis">لديهم إعاقة</option><option value="u5">لديهم أطفال دون 5 سنوات</option></select>
+    </div>
   </div>
   <div id="resultsWrap"></div>`;
 }
@@ -573,32 +629,34 @@ function bindSearch(){
     let base = session.role==='admin'? houses() : houses().filter(h=>h.researcher_id===session.id);
     let rows=[];
     base.forEach(h=>h.families.forEach(f=>rows.push({h,f})));
-    if(q) rows=rows.filter(({h,f})=> String(h.house_number).includes(q) || String(f.family_number||'').includes(q) || (f.head_name||'').includes(q) || (f.phone||'').includes(q));
+    if(q) rows=rows.filter(({h,f})=> String(h.house_number).includes(q) || String(f.family_number||'').includes(q) || normAr(f.head_name).includes(normAr(q)) || (f.phone||'').includes(q));
+    const blk=$('#blk').value.trim(), flt=$('#fltSel').value;
+    if(blk) rows=rows.filter(({h})=>String(h.block_number)===blk);
+    if(flt==='chronic') rows=rows.filter(({f})=>f.chronic_disease==='نعم');
+    if(flt==='dis') rows=rows.filter(({f})=>f.disability==='نعم');
+    if(flt==='u5') rows=rows.filter(({f})=>Number(f.under5)>0);
     rows.sort((a,b)=> sortBy==='house'? a.h.house_number-b.h.house_number : new Date(b.h.created_at)-new Date(a.h.created_at));
     $('#resultsWrap').innerHTML = rows.length? `
       <div class="card">
         <div class="tblwrap"><table>
-          <tr><th>رقم المنزل</th><th>رقم الأسرة</th><th>رب الأسرة</th><th>الهاتف</th><th>الباحث</th><th>الحالة</th><th></th></tr>
-          ${rows.map(({h,f})=>`<tr>
+          <tr><th>رقم المنزل</th><th>رقم الأسرة</th><th>رب الأسرة</th><th>الهاتف</th><th>الباحث</th><th>الحالة</th></tr>
+          ${rows.map(({h,f})=>`<tr class="fam-row" data-h="${h.id}" data-f="${f.id}">
             <td>${h.house_number}</td><td>${f.family_number||'-'}</td><td>${f.head_name}</td><td>${f.phone}</td><td>${h.researcher_name}</td>
             <td><span class="badge ${f.sync_status==='synced'?'b-ok':'b-warn'}">${f.sync_status==='synced'?'متزامن':'محفوظ محلياً'}</span></td>
-            <td>
-              <button class="btn sm sec viewBtn" data-h="${h.id}" data-f="${f.id}">${icon('eye',14)} عرض</button>
-            </td>
           </tr>`).join('')}
         </table></div>
-        <p class="muted" style="margin-top:8px">${rows.length} نتيجة معروضة (التصدير أدناه يشمل كل السجلات المحفوظة ضمن صلاحيتك، وليس فقط نتائج البحث الحالية)</p>
+        <p class="muted" style="margin-top:8px">${rows.length} نتيجة معروضة</p>
         <div class="pdfbar">
           <button class="btn sec sm" id="exportFullPdf">${icon('file-down',14)} تصدير جميع البيانات PDF</button>
           <button class="btn sec sm" id="exportSummaryPdf">${icon('file-down',14)} تصدير بيانات الأسر PDF</button>
         </div>
       </div>` : '<div class="card"><p class="empty">لا توجد نتائج مطابقة</p></div>';
-    $$('.viewBtn').forEach(b=>b.onclick=()=>{viewHouseId=b.dataset.h;editHouseId=b.dataset.f;detailReturnRoute='search';nav('detail')});
+    $$('.fam-row').forEach(tr=>tr.onclick=()=>openFamilyModal(tr.dataset.h,tr.dataset.f));
     const fullBtn=$('#exportFullPdf'), sumBtn=$('#exportSummaryPdf');
     if(fullBtn) fullBtn.onclick=()=>runExport(fullBtn,exportFullPdf);
     if(sumBtn) sumBtn.onclick=()=>runExport(sumBtn,exportSummaryPdf);
   };
-  $('#q').oninput=doSearch;$('#sortBy').onchange=doSearch;
+  $('#q').oninput=doSearch;$('#sortBy').onchange=doSearch;$('#blk').oninput=doSearch;$('#fltSel').onchange=doSearch;
   doSearch();
 }
 // ===== تصدير PDF (يشمل كل السجلات المحفوظة ضمن صلاحية المستخدم، وليس فقط نتائج البحث) =====
@@ -613,7 +671,7 @@ function chunk(arr,n){const out=[];for(let i=0;i<arr.length;i+=n)out.push(arr.sl
 // كل أسر الحي من جميع الباحثين (متاحة للقراءة فقط لكل من المدير والباحث - بدون تقييد بالباحث الحالي)
 function allNeighborhoodRows(){
   const rows=[];
-  houses().forEach(h=>h.families.forEach(f=>rows.push({h,f})));
+  houses().forEach(h=>h.families.forEach(f=>rows.push({h,f:canEditFamily(h)?f:maskFamily(f)})));
   return rows;
 }
 const FULL_COLUMNS=[
@@ -787,8 +845,10 @@ async function exportSummaryPdf(rows){
 function closeFamilyModal(){const o=document.getElementById('familyModalOverlay');if(o)o.remove()}
 function openFamilyModal(hId,fId){
   const h=houses().find(x=>x.id===hId); if(!h){toast('السجل غير موجود',true);return}
-  const f=h.families.find(x=>x.id===fId); if(!f){toast('السجل غير موجود',true);return}
+  let f=h.families.find(x=>x.id===fId); if(!f){toast('السجل غير موجود',true);return}
+  if(!canEditFamily(h)) f=maskFamily(f);
   closeFamilyModal();
+  const backRoute=route; // الشاشة الحالية (السجلات أو جميع أسر الحي) للعودة إليها بعد التعديل/الحذف
   const overlay=document.createElement('div');
   overlay.id='familyModalOverlay';overlay.className='modal-overlay';
   overlay.innerHTML=`<div class="modal-box" role="dialog" aria-modal="true">
@@ -810,9 +870,9 @@ function openFamilyModal(hId,fId){
   overlay.onclick=(e)=>{if(e.target===overlay) closeFamilyModal()};
   $('#modalCloseBtn').onclick=closeFamilyModal;
   const editBtn=$('#modalEditBtn');
-  if(editBtn) editBtn.onclick=()=>{closeFamilyModal();startEditFamily(hId,fId,'neighborhood')};
+  if(editBtn) editBtn.onclick=()=>{closeFamilyModal();startEditFamily(hId,fId,backRoute)};
   const delBtn=$('#modalDelBtn');
-  if(delBtn) delBtn.onclick=()=>{closeFamilyModal();deleteFamily(hId,fId,'neighborhood')};
+  if(delBtn) delBtn.onclick=()=>{closeFamilyModal();deleteFamily(hId,fId,backRoute)};
   const pdfBtn=$('#modalPdfBtn');
   pdfBtn.onclick=async()=>{
     if(pdfBtn.disabled) return;
@@ -832,7 +892,6 @@ function viewNeighborhood(){
   const researchers=[...new Set(houses().map(h=>h.researcher_name))];
   return `
   <div class="card">
-    <p class="muted">تعرض هذه القائمة جميع الأسر المسجَّلة في الحي بواسطة كل الباحثين مجتمعين. يمكن للباحث الاطلاع عليها والبحث والتصدير منها، دون صلاحية تعديل أو حذف سجلات باحثين آخرين.</p>
     <div class="row2">
       <input id="nq" placeholder="ابحث برقم المنزل / رقم الأسرة / اسم رب الأسرة / الهاتف">
       <select id="nSortBy"><option value="date">ترتيب حسب تاريخ التسجيل (الأحدث)</option><option value="house">ترتيب حسب رقم المنزل</option></select>
@@ -856,21 +915,19 @@ function bindNeighborhood(){
     const rf=$('#nResearcher').value;
     let rows=allNeighborhoodRows();
     if(rf) rows=rows.filter(({h})=>h.researcher_name===rf);
-    if(q) rows=rows.filter(({h,f})=> String(h.house_number).includes(q) || String(f.family_number||'').includes(q) || (f.head_name||'').includes(q) || (f.phone||'').includes(q));
+    if(q) rows=rows.filter(({h,f})=> String(h.house_number).includes(q) || String(f.family_number||'').includes(q) || normAr(f.head_name).includes(normAr(q)) || (f.phone||'').includes(q));
     rows.sort((a,b)=> sortBy==='house'? a.h.house_number-b.h.house_number : new Date(b.h.created_at)-new Date(a.h.created_at));
     $('#nResultsWrap').innerHTML = rows.length? `
       <div class="card">
         <p class="muted" style="margin-top:0">إجمالي الأسر المسجلة في الحي: <b>${allNeighborhoodRows().length}</b> — نتائج البحث الحالية: ${rows.length}</p>
         <div class="tblwrap"><table>
-          <tr><th>رقم المنزل</th><th>رقم الأسرة</th><th>رب الأسرة</th><th>الهاتف</th><th>الباحث</th><th>تاريخ التسجيل</th><th></th></tr>
+          <tr><th>رقم المنزل</th><th>رقم الأسرة</th><th>رب الأسرة</th><th>الهاتف</th><th>الباحث</th><th>تاريخ التسجيل</th></tr>
           ${rows.map(({h,f})=>`<tr class="fam-row" data-h="${h.id}" data-f="${f.id}">
             <td>${h.house_number}</td><td>${f.family_number||'-'}</td><td>${f.head_name}</td><td>${f.phone}</td><td>${h.researcher_name}</td><td>${fmt(h.created_at)}</td>
-            <td style="white-space:nowrap"><button class="btn sm sec nDetailBtn" data-h="${h.id}" data-f="${f.id}">${icon('eye',14)} عرض التفاصيل</button></td>
           </tr>`).join('')}
         </table></div>
       </div>` : '<div class="card"><p class="empty">لا توجد نتائج مطابقة</p></div>';
-    $$('.fam-row').forEach(tr=>tr.onclick=(e)=>{if(e.target.closest('.nDetailBtn'))return;openFamilyModal(tr.dataset.h,tr.dataset.f)});
-    $$('.nDetailBtn').forEach(b=>b.onclick=(e)=>{e.stopPropagation();openFamilyModal(b.dataset.h,b.dataset.f)});
+    $$('.fam-row').forEach(tr=>tr.onclick=()=>openFamilyModal(tr.dataset.h,tr.dataset.f));
   };
   $('#nq').oninput=doSearch;$('#nSortBy').onchange=doSearch;$('#nResearcher').onchange=doSearch;
   $('#nFullPdf').onclick=()=>runExport($('#nFullPdf'),exportFullPdf,allNeighborhoodRows);
@@ -894,8 +951,8 @@ function viewEditFamily(){
     <button class="btn sec sm" id="editBackBtn">← رجوع بدون حفظ</button>
     <h3 style="margin-top:10px">تعديل بيانات المنزل والأسرة</h3>
     <div class="row2">
-      <div class="field" id="ef-house_number"><label>رقم المنزل *</label><input id="editHouseNumber" type="number" min="0" value="${editHouseFields.house_number}"><div class="err"></div></div>
-      <div class="field"><label>رقم المربع</label><input id="editBlockNumber" type="number" min="0" value="${editHouseFields.block_number||''}"></div>
+      <div class="field" id="ef-house_number"><label>رقم المنزل *</label><input id="editHouseNumber" type="number" min="0" value="${escAttr(editHouseFields.house_number)}"><div class="err"></div></div>
+      <div class="field"><label>رقم المربع</label><input id="editBlockNumber" type="number" min="0" value="${escAttr(editHouseFields.block_number)}"></div>
     </div>
   </div>
   <div id="editFamBox">${familyForm(editFamilyDraft,idx,h.families.length,{hideRemove:true})}</div>
@@ -994,7 +1051,7 @@ function viewDetail(){
       <tr><th>أرمل/أرملة ضمن الأسرة</th><td>${f.widow}</td></tr>
       <tr><th>مرض مزمن</th><td>${f.chronic_disease}${f.chronic_disease==='نعم'?' - '+f.chronic_disease_type:''}</td></tr>
       ${f.chronic_disease==='نعم'?`<tr><th>يتلقى علاجاً</th><td>${f.treatment}${f.treatment==='نعم'&&f.treatment_type?' - '+f.treatment_type:''}</td></tr>`:''}
-      <tr><th>إعاقة</th><td>${f.disability}${f.disability==='نعم'?' - '+f.disability_type.join('، '):''}</td></tr>
+      <tr><th>إعاقة</th><td>${f.disability}${f.disability==='نعم'?' - '+(f.disability_type||[]).join('، '):''}</td></tr>
       <tr><th>ملاحظات</th><td>${f.notes||'-'}</td></tr>
     </table>
   </div>`;
@@ -1025,7 +1082,6 @@ function viewResearchers(){
       <div class="field" id="f-eu"><label>الاسم الكامل</label><input id="editName" value="${editingUser.name}"><div class="err">مطلوب</div></div>
       <label>البريد الإلكتروني</label>
       <input value="${editingUser.email||''}" disabled>
-      <p class="muted">لا يمكن تغيير البريد الإلكتروني لحساب آخر من هنا (قيد تقني من Supabase Auth على الواجهة الأمامية).</p>
       <label>المسمى الوظيفي</label>
       ${jobTitleSelect('editRole',editingUser.role)}
       ${isSelf?`
@@ -1035,7 +1091,6 @@ function viewResearchers(){
         <div class="field" style="margin-top:10px">
           <label>كلمة المرور</label>
           <button type="button" class="btn sec sm" id="sendResetBtn">${icon('mail',14)} إرسال رابط إعادة تعيين كلمة المرور بالبريد</button>
-          <p class="muted">لا يمكن تعيين كلمة مرور لمستخدم آخر مباشرة من المتصفح لأسباب أمنية؛ هذا يرسل له رابطاً آمناً عبر Supabase ليضع كلمة مروره بنفسه.</p>
         </div>
       `}
       <div style="margin-top:10px;display:flex;gap:8px">
@@ -1044,7 +1099,6 @@ function viewResearchers(){
       </div>
     `:`
       <h3 style="margin-top:0">إضافة مستخدم جديد</h3>
-      <p class="muted">اسم المستخدم للدخول فقط، بينما الاسم الكامل هو الذي يظهر داخل النظام وفي المعاملات. البريد الإلكتروني يبقى مرتبطاً بحساب Supabase Auth.</p>
       <div class="row2">
         <div class="field" id="f-nun"><label>اسم المستخدم</label><input id="newUsername" type="text" autocomplete="off"><div class="err">مطلوب — يجب أن يكون فريداً</div></div>
         <div class="field" id="f-nu"><label>الاسم الكامل</label><input id="newName"><div class="err">مطلوب</div></div>
@@ -1080,7 +1134,6 @@ function viewResearchers(){
       }).join('')}
     </table></div>
     ${list.length===0?'<p class="empty">لا يوجد مستخدمون بعد</p>':''}
-    <p class="muted" style="margin-top:8px">«حذف» هنا يُعطّل الحساب منطقياً (Soft Delete) دائماً ولا يحذف الحساب نهائياً من نظام المصادقة — حذف حساب مصادقة نهائياً يتطلب صلاحيات خادم غير متاحة من المتصفح لأسباب أمنية.</p>
   </div>`;
 }
 async function bindResearchers(){
@@ -1201,17 +1254,14 @@ function viewSettings(){
   <div class="card">
     <h3 style="margin-top:0">حالة الاتصال بقاعدة البيانات</h3>
     <p><span class="badge ${navigator.onLine?'b-ok':'b-warn'}">${navigator.onLine?'متصل':'غير متصل'}</span></p>
-    <p class="muted">هذا التطبيق متصل بقاعدة بيانات Supabase حقيقية، ويتطلب اتصالاً فعلياً بالإنترنت لإتمام أي عملية حفظ أو تعديل أو حذف.</p>
   </div>
-  <div class="card">
-    <h3 style="margin-top:0">النسخ الاحتياطي واستعادة البيانات</h3>
-    <p class="muted">البيانات محفوظة مركزياً في Supabase (قاعدة PostgreSQL مُدارة). النسخ الاحتياطي والاستعادة تُدار من لوحة تحكم Supabase: Project Settings ← Database ← Backups. لا توجد في هذه الواجهة أداة لمسح قاعدة البيانات بالكامل عمداً — هذا إجراء خطير يجب أن يبقى بيد من يملك وصولاً مباشراً للوحة تحكم Supabase فقط.</p>
-  </div>`;
+`;
 }
 function bindSettings(){
   $('#logoutBtn').onclick=logout;
 }
 
+if('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{});
 boot();
 </script>
 </body>
